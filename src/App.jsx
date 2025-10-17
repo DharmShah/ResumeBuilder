@@ -3,6 +3,8 @@ import './App.css';
 import Header from './components/header';
 import ResumeCard from './components/ResumeCard';
 import Login from './components/login';
+import Signup from './components/signup';
+import ResumeCheck from './components/resumechek';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -10,7 +12,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="p-8">
+        <main className="">
           <Routes>
             <Route
               path="/"
@@ -23,6 +25,8 @@ function App() {
               }
             />
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/resumecheck" element={<ResumeCheck />} />
           </Routes>
         </main>
       </div>

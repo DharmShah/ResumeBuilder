@@ -1,13 +1,13 @@
 import React from "react";
 import logo from "../assets/robot.png"; // Import image
-import { useNavigate } from 'react-router-dom';
-
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <div className="flex mr-[10px] mt-[-20px] bg-gray-100 dark:bg-gray-900">
+      {/* Left Side - Logo Section */}
       {/* Left Side - Logo Section */}
       <div className="flex flex-col justify-center items-center w-1/2 bg-white">
         <img src={logo} alt="Logo" height={550} />
@@ -17,7 +17,7 @@ export default function Login() {
       <div className="flex justify-center items-center w-1/2">
         <div className="w-[350px] p-8 space-y-8 bg-white rounded-2xl shadow-2xl dark:bg-gray-800">
           <h1 className="text-3xl font-bold text-center text-gray-800 dark:text-gray-100">
-            Login
+            Signup
           </h1>
 
           <form noValidate className="space-y-6">
@@ -47,34 +47,37 @@ export default function Login() {
                 id="password"
                 type="password"
                 placeholder="Enter your password"
+                className="h-12 w-full p-[10px]  pl-[25px] bg-gray-50 border border-gray-300 text-gray-900 rounded-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div >
+              <label
+                htmlFor="password"
+                className="block w-[200px] mt-[10px] text-sm font-semibold text-gray-600 dark:text-gray-300"
+              >
+                Conform Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Conform password"
                 className="h-12 w-full p-[10px] pl-[25px] bg-gray-50 border border-gray-300 text-gray-900 rounded-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-            <div className="text-right mt-[15px]">
-              <a
-                href="/forgot-password"
-                className="text-[15px] font-semibold  text-blue-600 hover:underline dark:text-blue-400"
-              >
-                Forgot Password?
-              </a>
-            </div>
-
             <button
-              type="submit"  onClick={() => navigate('/')}
-              className="w-[390px] h-12 text-lg font-semibold text-white bg-gray-800 rounded-full 
-             hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 transition-colors duration-300"
-            >
-              Login
+              type="submit" onClick={() => navigate('/')}
+              className="w-[390px] h-12 text-lg font-semibold text-white bg-gray-800 rounded-full mt-[15px] ">
+              Signup
             </button>
 
             <div className="text-sm text-center text-gray-600 dark:text-gray-400 mt-[15px]">
-              Don't have an account?{" "}
+              Already have an account?{" "}
               <a
-                href="/signup"
+                href="/login"
                 className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
               >
-                Sign Up
+                Login
               </a>
             </div>
           </form>
