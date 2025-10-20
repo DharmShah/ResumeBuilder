@@ -24,7 +24,7 @@ export default function Header() {
 
       {/* Right: Review & Login/Signup */}
       <div className="flex items-start space-x-4 mr-[-80px]">
-        <button onClick={()=>navigate('/resumecheck')} className="px-6 py-3 mt-1 bg-gray-200 rounded-[20px] w-[250px] text-lg font-medium hover:bg-gray-300 transition">
+        <button onClick={()=>navigate('/resumeBot')} className="px-6 py-3 mt-1 bg-gray-200 rounded-[20px] w-[250px] text-lg font-medium hover:bg-gray-300 transition">
           Review Resume
         </button>
         <button

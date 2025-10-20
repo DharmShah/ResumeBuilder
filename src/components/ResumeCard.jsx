@@ -37,6 +37,7 @@ export default function ResumeCard() {
     <div className="grid grid-cols-3 gap-6 p-4">
       {resumes.map((resume) => (
         <div
+          onClick={() => handleClick(resume.id)}
           key={resume.id}
           className={`max-w-xs mt-[30px] cursor-pointer rounded-md shadow-md ${resume.color}`}
         >
@@ -52,8 +53,7 @@ export default function ResumeCard() {
               </h2>
             </div>
             <button
-              type="button"
-              onClick={() => handleClick(resume.id)}
+              type="button"            
               className="flex items-center justify-center w-[280px] ml-[70px] font-semibold tracking-wide rounded-md bg-rose-600 text-gray-50 hover:bg-rose-700 transition"
             >
               Make This Resume
