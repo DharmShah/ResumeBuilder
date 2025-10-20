@@ -2,11 +2,11 @@ import React from "react";
 
 const Resume3 = () => {
   return (
-    <div className="w-[8.5in] min-h-[11in] mx-auto border-[20px] border-[#5f9ea0] p-5 bg-white text-[10pt] text-[#333] font-sans leading-relaxed">
+    <div className="w-[8.5in] min-h-[11in] mx-auto  border p-[15px] p-5 bg-white text-[10pt] text-[#333] font-sans leading-relaxed">
       {/* Header Section */}
       <header className="flex items-start mb-6">
         <img
-          className="w-20 h-20 border-2 border-[#5f9ea0] rounded-md mr-6 shadow-sm object-contain"
+          className="w-[100px] h-[100px] border-2 border-[#5f9ea0] rounded-md mr-6 shadow-sm object-contain"
           src="https://assets.scandit.com/400x500/34188e9ca7/symbology-qr-code.svg"
           alt="QR Code Logo"
         />

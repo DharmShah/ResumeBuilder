@@ -2,9 +2,14 @@ import React, { useState } from "react";
 import { Trash2, Plus, Download, Upload, X } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 export default function ResumeBuilder() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Extract id from URL query string
+  const searchParams = new URLSearchParams(location.search);
+  const id = searchParams.get("id");
 
   const [formData, setFormData] = useState({
     fullName: "", email: "", phone: "", address: "", dob: "", linkedin: "", github: "", portfolio: "",
@@ -76,19 +81,24 @@ export default function ResumeBuilder() {
   };
 
   const handleSubmit = () => {
-    if (validateForm()) {
-      console.log("Resume Data:", formData);
-      alert("Resume saved successfully!");
-      navigate("/userResume")
+  if (validateForm()) {
+    console.log("Resume Data:", formData);
+    alert("Resume saved successfully!");
+    if (id) {
+      navigate(`/resume${id}`);
     } else {
-      const missingFields = Object.keys(errors).map(key => {
-        if (key.startsWith("edu-")) return "Education: " + key.split("-")[2];
-        if (key.startsWith("exp-")) return "Experience: " + key.split("-")[2];
-        return key.replace(/([A-Z])/g, " $1");
-      });
-      alert("Please fill in the following required fields:\n\n" + missingFields.join("\n"));
+      alert("Resume ID not found in URL!");
     }
-  };
+  } else {
+    const missingFields = Object.keys(errors).map(key => {
+      if (key.startsWith("edu-")) return "Education: " + key.split("-")[2];
+      if (key.startsWith("exp-")) return "Experience: " + key.split("-")[2];
+      return key.replace(/([A-Z])/g, " $1");
+    });
+    alert("Please fill in the following required fields:\n\n" + missingFields.join("\n"));
+  }
+};
+
 
   const inputStyle = (errorKey) => ({ padding: "12px 16px", borderRadius: "8px", background: "rgba(255,255,255,0.1)", border: `1px solid ${errors[errorKey] ? "#ef4444" : "rgba(255,255,255,0.2)"}`, color: "white", fontSize: "14px", outline: "none", width: "100%", boxSizing: "border-box" });
 

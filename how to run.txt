@@ -1,0 +1,21 @@
+for python server
+# create virtual environment
+
+0) cd my_flask_app
+
+1) python -m venv venv
+
+2) venv\Scripts\activate
+
+3) pip install -r requirements.txt
+
+4) python app.py
+
+
+
+for react run
+
+npm install react-icons
+
+
+npm run dev 

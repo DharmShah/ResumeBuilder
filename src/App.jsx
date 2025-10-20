@@ -10,6 +10,7 @@ import UserResume from './components/userResume';
 import Resume1 from './components/resumeTemplates/resume1';
 import Resume2 from './components/resumeTemplates/resume2';
 import Resume3 from './components/resumeTemplates/resume3';
+import Footer from './components/footer';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
                   <h1 className="text-2xl font-bold">Welcome to Resume Builder!</h1>
                   <p className="mt-4">Here you can create and review resumes easily.</p>
                   <ResumeCard />
+                  <Footer />
                 </>
               }
             />
@@ -34,6 +36,7 @@ function App() {
             <Route path="/resumeBot" element={<ResumeCheck />} />
             <Route path="/form" element={<Form />} />
             <Route path="/userResume" element={<UserResume />} />
+            <Route path="/footer" element={<Footer />} />
           </Routes>
           <Routes>
             <Route path="/resume1" element={<Resume1 />} />

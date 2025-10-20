@@ -2,7 +2,7 @@ import React from "react";
 
 const Resume2 = () => {
   return (
-    <div className="w-[8.5in] mx-auto my-[0.5in] p-[0.5in] bg-white text-gray-800 font-sans text-[10pt] leading-snug">
+    <div className="w-[8.5in] mx-auto  border p-[15px] bg-white text-gray-800 font-sans text-[10pt] leading-snug">
       
       {/* Header */}
       <header className="mb-5">
