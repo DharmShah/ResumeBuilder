@@ -4,6 +4,10 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: [
+  '[animation-delay:-0.3s]',
+  '[animation-delay:-0.15s]'
+],
   theme: {
     extend: {},
   },
