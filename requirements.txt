@@ -1,15 +1,12 @@
-npm install lucide-react
-
-
-
-
 # Python 
 
-
-
+python -m venv venv
 
 
 Flask==3.0.3
 flask-cors==4.0.1
 python-dotenv==1.0.1
 requests==2.32.3
+
+
+

@@ -7,15 +7,17 @@ for python server
 
 2) venv\Scripts\activate
 
-3) pip install -r requirements.txt
+3) pip install flask
 
-4) python app.py
+4) pip install python-dotenv requests flask flask-cors
+
+5) pip install -r requirements.txt
+
+6) python app.py
 
 
 
-for react run
-
+# react
+npm install
+npm install -g vite
 npm install react-icons
-
-
-npm run dev 
