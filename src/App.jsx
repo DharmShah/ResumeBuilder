@@ -13,7 +13,7 @@ import Resume3 from './components/resumeTemplates/resume3';
 import Resume4 from './components/resumeTemplates/resume4';
 import Resume5 from './components/resumeTemplates/resume5';
 import Resume6 from './components/resumeTemplates/resume6';
-import ResumeCustom from './components/resumeTemplates/resumecustom';
+import Resume9 from './components/resumeTemplates/resume9';
 import Footer from './components/footer';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -49,7 +49,7 @@ function App() {
             <Route path="/resume4" element={ <><Resume4 /> <Footer /></> } />
             <Route path="/resume5" element={ <><Resume5 /> <Footer /></> } />
             <Route path="/resume6" element={ <><Resume6 /> <Footer /></> } />
-            <Route path="/resumeCustom" element={ <><ResumeCustom /> <Footer /></> } />
+            <Route path="/resume9" element={ <><Resume9 /> <Footer /></> } />
           </Routes>
         </main>
       </div>

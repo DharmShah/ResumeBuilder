@@ -26,11 +26,13 @@ export default function ResumeCard() {
   ];
 
   const handleClick = (id) => {
-    // Option 1: navigate with query params
-    navigate(`/form?id=${id}`);
-    
-    // Option 2 (alternative): navigate using path param
-    // navigate(`/create/${id}`);
+    if (id === 9) {
+      // Special redirect for resume9
+      navigate("/resume9");
+    } else {
+      // Default redirect
+      navigate(`/form?id=${id}`);
+    }
   };
 
   return (
