@@ -1,18 +1,24 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FaPaperPlane, FaFileUpload } from "react-icons/fa";
+import { FaPaperPlane, FaFileUpload, FaMicrophone } from "react-icons/fa";
 
 export default function ResumeCheck() {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [resumeText, setResumeText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isConverting, setIsConverting] = useState(false); // 🆕 while converting speech
   const chatEndRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const addMessage = (message) => setMessages((prev) => [...prev, message]);
+  const removeLastLoader = () =>
+    setMessages((prev) => prev.filter((msg) => msg.type !== "loader"));
 
   const handleInputChange = (e) => setInputText(e.target.value);
 
@@ -23,6 +29,7 @@ export default function ResumeCheck() {
     }
   };
 
+  // 💬 Chat with Bot
   const handleSend = async () => {
     const trimmedInput = inputText.trim();
     if (!trimmedInput) return;
@@ -30,9 +37,7 @@ export default function ResumeCheck() {
     addMessage({ type: "text", content: trimmedInput, sender: "user" });
     setInputText("");
     setLoading(true);
-
-    // temporary loader message
-    addMessage({ type: "loader", sender: "bot" });
+    addMessage({ type: "loader", sender: "bot", content: "Bot is thinking..." });
 
     try {
       const response = await fetch("http://localhost:5000/chat", {
@@ -41,29 +46,22 @@ export default function ResumeCheck() {
         body: JSON.stringify({ message: trimmedInput, resumeText }),
       });
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        throw new Error(`Expected JSON but got: ${text}`);
-      }
-
       const data = await response.json();
-
-      // replace loader with bot reply
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { type: "text", content: data.reply, sender: "bot" },
-      ]);
+      removeLastLoader();
+      addMessage({ type: "text", content: data.reply, sender: "bot" });
     } catch (err) {
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { type: "text", content: `Network error: ${err.message}`, sender: "bot" },
-      ]);
+      removeLastLoader();
+      addMessage({
+        type: "text",
+        content: `Network error: ${err.message}`,
+        sender: "bot",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // 📁 Upload Resume
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -77,22 +75,98 @@ export default function ResumeCheck() {
         body: formData,
       });
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        throw new Error(`Expected JSON but got: ${text}`);
-      }
-
       const data = await response.json();
-      addMessage({ type: "text", content: `Resume Score: ${data.score}/100`, sender: "bot" });
+      addMessage({
+        type: "text",
+        content: `Resume Score: ${data.score}/100`,
+        sender: "bot",
+      });
       setResumeText(data.text_preview);
     } catch (err) {
-      addMessage({ type: "text", content: `Network error: ${err.message}`, sender: "bot" });
+      addMessage({
+        type: "text",
+        content: `Network error: ${err.message}`,
+        sender: "bot",
+      });
     }
   };
 
-  // Loader Bubble Component
-  const LoaderBubble = () => (
+  // 🎙️ Start or stop recording audio
+  const handleMicClick = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        await sendAudioToWhisper(audioBlob);
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      alert("Microphone access denied or unavailable.");
+      console.error("Mic error:", err);
+    }
+  };
+
+  // 🎯 Send audio blob → backend → Whisper → text
+  const sendAudioToWhisper = async (audioBlob) => {
+    const formData = new FormData();
+    formData.append("audio", audioBlob);
+
+    setIsConverting(true);
+    addMessage({
+      type: "loader",
+      sender: "bot",
+      content: "🎙️ Converting your speech...",
+    });
+
+    try {
+      const response = await fetch("http://localhost:5000/speech-to-text", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      removeLastLoader();
+      if (data.text) {
+        setInputText((prev) => (prev ? prev + " " + data.text : data.text));
+      } else {
+        addMessage({
+          type: "text",
+          content: "Speech recognition failed.",
+          sender: "bot",
+        });
+      }
+    } catch (err) {
+      removeLastLoader();
+      addMessage({
+        type: "text",
+        content: "Error converting speech to text.",
+        sender: "bot",
+      });
+      console.error("Speech-to-text error:", err);
+    } finally {
+      setIsConverting(false);
+      setIsRecording(false);
+    }
+  };
+
+  // 💬 Loader bubble
+  const LoaderBubble = ({ text = "Bot is thinking..." }) => (
     <div className="flex justify-start mb-3">
       <div className="bg-gray-300 text-black px-4 py-2 rounded-lg flex items-center">
         <svg
@@ -108,12 +182,7 @@ export default function ResumeCheck() {
             50 100.591C22.3858 100.591 0 78.2051 
             0 50.5908C0 22.9766 22.3858 0.59082 
             50 0.59082C77.6142 0.59082 100 22.9766 
-            100 50.5908ZM9.08144 50.5908C9.08144 
-            73.1895 27.4013 91.5094 50 91.5094C72.5987 
-            91.5094 90.9186 73.1895 90.9186 
-            50.5908C90.9186 27.9921 72.5987 9.67226 
-            50 9.67226C27.4013 9.67226 9.08144 
-            27.9921 9.08144 50.5908Z"
+            100 50.5908Z"
             fill="#E5E7EB"
           />
           <path
@@ -126,20 +195,11 @@ export default function ResumeCheck() {
             1.94025 56.7698 1.05124C51.7666 
             0.367541 46.6976 0.446843 41.7345 
             1.27873C39.2613 1.69328 37.813 
-            4.19778 38.4501 6.62326C39.0873 
-            9.04874 41.5694 10.4717 44.0505 
-            10.1071C47.8511 9.54855 51.7191 
-            9.52689 55.5402 10.0491C60.8642 
-            10.7766 65.9928 12.5457 70.6331 
-            15.2552C75.2735 17.9648 79.3347 
-            21.5619 82.5849 25.841C84.9175 
-            28.9121 86.7997 32.2913 88.1811 
-            35.8758C89.083 38.2158 91.5421 
-            39.6781 93.9676 39.0409Z"
+            4.19778 38.4501 6.62326Z"
             fill="currentColor"
           />
         </svg>
-        Bot is thinking...
+        {text}
       </div>
     </div>
   );
@@ -153,7 +213,7 @@ export default function ResumeCheck() {
       <div className="flex-1 overflow-y-auto p-4 bg-gray-100 mb-2">
         {messages.map((msg, index) =>
           msg.type === "loader" ? (
-            <LoaderBubble key={index} />
+            <LoaderBubble key={index} text={msg.content} />
           ) : (
             <div
               key={index}
@@ -186,19 +246,30 @@ export default function ResumeCheck() {
           className="flex-1 m-[15px] px-[15px] p-[10px] border rounded-full outline-none focus:ring-2 focus:ring-blue-400"
         />
 
+        {/* 🎙️ Microphone Button */}
+        <button
+          onClick={handleMicClick}
+          disabled={isConverting}
+          className={`p-3 rounded-full text-white mr-[10px] transition-all ${
+            isRecording
+              ? "bg-red-600 animate-pulse shadow-lg scale-110"
+              : "bg-blue-600 hover:bg-blue-700"
+          } ${isConverting ? "opacity-60 cursor-not-allowed" : ""}`}
+          title={isRecording ? "Recording..." : "Start recording"}
+        >
+          <FaMicrophone />
+        </button>
+
+        {/* 📁 File Upload */}
         <label
           htmlFor="file-upload"
-          className="bg-blue-600 mr-[15px] ml-[15px] text-white p-3 rounded-full cursor-pointer flex items-center justify-center hover:bg-blue-700 transition"
+          className="bg-blue-600 mr-[15px] ml-[5px] text-white p-3 rounded-full cursor-pointer flex items-center justify-center hover:bg-blue-700 transition"
         >
           <FaFileUpload />
         </label>
-        <input
-          id="file-upload"
-          type="file"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+        <input id="file-upload" type="file" onChange={handleFileChange} className="hidden" />
 
+        {/* 🚀 Send Button */}
         <button
           onClick={handleSend}
           disabled={loading}
