@@ -18,6 +18,12 @@ for python server
 
 
 # react
-npm install
-npm install -g vite
-npm install react-icons
+1) npm install
+2) npm install -g vite
+3) npm install react-icons
+
+
+#how to pull the repo 
+
+1) git pull or git pull origin main
+

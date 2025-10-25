@@ -1,6 +1,7 @@
 // App.js
 import './App.css';
 import Header from './components/header';
+import Index from './components/index';
 import ResumeCard from './components/ResumeCard';
 import Login from './components/login';
 import Signup from './components/signup';
@@ -28,8 +29,7 @@ function App() {
               path="/"
               element={
                 <>
-                  <h1 className="text-2xl font-bold">Welcome to Resume Builder!</h1>
-                  <p className="mt-4">Here you can create and review resumes easily.</p>
+                  <Index />
                   <ResumeCard />
                   <Footer />
                 </>
