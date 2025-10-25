@@ -5,37 +5,44 @@ export default function Header() {
   const navigate = useNavigate();
 
   return (
-    <div className='mt-[-10px] w-[100%]'>
-      <header className="flex items-center justify-between bg-white shadow-lg px-12 py-6">
+    <header className="flex w-[1460px] ml-[-100px] mt-[-20px] items-center justify-between bg-[#19485F] px-[15px] shadow-md">
 
-      {/* Left: Resume Builder Title */}
-      <div className="flex items-center mr-[15px] cursor-pointer" onClick={()=>navigate("/")}>
-        <h2 className="font-semibold text-gray-600" >Resume Builder</h2>
+      {/* Left: Logo + Title */}
+      <div
+        className="flex items-center cursor-pointer"
+        onClick={() => navigate("/")}
+      >
+        <div className="rounded-full m-[10px] h-[50px] w-[50px] bg-[#D9E0A4] flex items-center justify-center text-[#19485F] font-bold">
+          <h1>R</h1>
+        </div>
+        <h2 className="text-[#D9E0A4] font-bold text-xl ml-[25px]">Resume Builder</h2>
       </div>
 
-      {/* Middle: Search Bar */}
-      <div className="flex-1 flex justify-center ml-[10px] mr-[5px]">
+      {/* Center: Search Bar */}
+      <div className="flex w-[550px]">
         <input
           type="text"
           placeholder="Search templates..."
-          className="w-[450px] mr-[50px] max-w-lg p-[15px] text-lg border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full max-w-lg p-[15px] text-base border-2 border-[#D9E0A4] rounded-full focus:outline-none focus:ring-2 focus:ring-[#D9E0A4] bg-[#1F5C72] text-[#D9E0A4] placeholder-[#C5D2B3]"
         />
       </div>
 
-      {/* Right: Review & Login/Signup */}
-      <div className="flex items-start space-x-4 mr-[-80px]">
-        <button onClick={()=>navigate('/resumeBot')} className="px-6 py-3 mt-1 bg-gray-200 rounded-[20px] w-[250px] text-lg font-medium hover:bg-gray-300 transition">
+      {/* Right: Buttons */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => navigate('/resumeBot')}
+          className="px-6 py-2 bg-[#FFB347] text-[#19485F] rounded-lg font-semibold hover:bg-[#FFA533] transition w-[200px]"
+        >
           Review Resume
         </button>
         <button
-          className="px-6 py-3 mt-1 ml-[15px] mr-[30px] bg-blue-600 text-white w-[250px] rounded-[20px] text-lg font-medium hover:bg-blue-700 transition"
           onClick={() => navigate('/login')}
+          className="px-6 py-2 ml-[25px] bg-[#D9E0A4] text-[#19485F] rounded-lg font-semibold hover:bg-[#C5D2A0] transition w-[200px]"
         >
           Login / Signup
         </button>
       </div>
 
     </header>
-    </div>
   );
 }

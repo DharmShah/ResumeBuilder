@@ -14,23 +14,21 @@ export default function ResumeCard() {
   const navigate = useNavigate();
 
   const resumes = [
-    { id: 1, name: "Business Professional", img: resume1, color: "bg-blue-200" },
-    { id: 2, name: "Creative Designer", img: resume2, color: "bg-red-200" },
-    { id: 3, name: "Tech Specialist", img: resume3, color: "bg-green-200" },
-    { id: 4, name: "Business Professional", img: resume4, color: "bg-blue-200" },
-    { id: 5, name: "Creative Designer", img: resume5, color: "bg-red-200" },
-    { id: 6, name: "Tech Specialist", img: resume6, color: "bg-green-200" },
-    { id: 7, name: "Business Professional", img: resume7, color: "bg-blue-200" },
-    { id: 8, name: "Creative Designer", img: resume8, color: "bg-red-200" },
-    { id: 9, name: "Custom Resume", img: custome, color: "bg-yellow-200" },
+    { id: 1, name: "Business Professional", img: resume1, color: "bg-blue-100" },
+    { id: 2, name: "Creative Designer", img: resume2, color: "bg-red-100" },
+    { id: 3, name: "Tech Specialist", img: resume3, color: "bg-green-100" },
+    { id: 4, name: "Business Professional", img: resume4, color: "bg-blue-100" },
+    { id: 5, name: "Creative Designer", img: resume5, color: "bg-red-100" },
+    { id: 6, name: "Tech Specialist", img: resume6, color: "bg-green-100" },
+    { id: 7, name: "Business Professional", img: resume7, color: "bg-blue-100" },
+    { id: 8, name: "Creative Designer", img: resume8, color: "bg-red-100" },
+    { id: 9, name: "Custom Resume", img: custome, color: "bg-yellow-100" },
   ];
 
   const handleClick = (id) => {
     if (id === 9) {
-      // Special redirect for resume9
       navigate("/resume9");
     } else {
-      // Default redirect
       navigate(`/form?id=${id}`);
     }
   };
@@ -41,22 +39,20 @@ export default function ResumeCard() {
         <div
           onClick={() => handleClick(resume.id)}
           key={resume.id}
-          className={`max-w-xs mt-[30px] cursor-pointer rounded-md shadow-md ${resume.color}`}
+          className={`max-w-xs mt-[30px] cursor-pointer rounded-md shadow-md transition transform hover:shadow-xl hover:-translate-y-1 ${resume.color}`}
         >
           <img
             src={resume.img}
             alt={resume.name}
-            className="object-cover object-center w-[320px] h-[450px] rounded-t-md dark:bg-gray-500"
+            className="object-cover object-center w-[320px] h-[450px] rounded-t-md"
           />
           <div className="flex flex-col justify-between p-6 space-y-8">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-semibold tracking-wide">
-                {resume.name}
-              </h2>
-            </div>
+            <h2 className="text-3xl font-semibold tracking-wide text-gray-800">
+              {resume.name}
+            </h2>
             <button
-              type="button"            
-              className="flex items-center justify-center w-[280px] ml-[70px] font-semibold tracking-wide rounded-md bg-rose-600 text-gray-50 hover:bg-rose-700 transition"
+              type="button"
+              className="flex items-center justify-center w-[280px] ml-[70px] font-semibold tracking-wide rounded-md bg-[#D9E0A4] text-[#19485F] hover:bg-[#C5D2A0] transition-shadow shadow-md hover:shadow-lg"
             >
               Make This Resume
             </button>
