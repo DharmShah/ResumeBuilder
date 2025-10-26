@@ -1,42 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Trash2, Plus, Download, Upload, X } from "lucide-react";
-import { Navigate } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function ResumeBuilder() {
   const navigate = useNavigate();
   const location = useLocation();
-  // Extract id from URL query string
   const searchParams = new URLSearchParams(location.search);
   const id = searchParams.get("id");
 
   const [formData, setFormData] = useState({
-    fullName: "", email: "", phone: "", address: "", dob: "", linkedin: "", github: "", portfolio: "",
-    profileImage: null, profileImagePreview: null, summary: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    dob: "",
+    linkedin: "",
+    github: "",
+    portfolio: "",
+    profileImage: null,
+    profileImagePreview: null,
+    summary: "",
     education: [{ school: "", degree: "", field: "", startYear: "", endYear: "" }],
     experience: [{ company: "", position: "", startDate: "", endDate: "", description: "" }],
-    skills: "", languages: "", certifications: "",
+    skills: "",
+    languages: "",
+    certifications: "",
   });
 
   const [errors, setErrors] = useState({});
+
+  // ✅ Prefill when editing
+  useEffect(() => {
+    const saved =
+      location.state?.formData ||
+      JSON.parse(localStorage.getItem("resumeData") || "{}");
+    if (saved && Object.keys(saved).length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        ...saved,
+        education: saved.education?.length ? saved.education : prev.education,
+        experience: saved.experience?.length ? saved.experience : prev.experience,
+      }));
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setFormData({ ...formData, profileImage: file, profileImagePreview: reader.result });
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeImage = () => setFormData({ ...formData, profileImage: null, profileImagePreview: null });
 
   const handleArrayChange = (index, e, section) => {
     const updated = [...formData[section]];
@@ -45,8 +57,11 @@ export default function ResumeBuilder() {
   };
 
   const addSection = (section) => {
-    const blankItem = section === "education" ? { school: "", degree: "", field: "", startYear: "", endYear: "" } : { company: "", position: "", startDate: "", endDate: "", description: "" };
-    setFormData({ ...formData, [section]: [...formData[section], blankItem] });
+    const blank =
+      section === "education"
+        ? { school: "", degree: "", field: "", startYear: "", endYear: "" }
+        : { company: "", position: "", startDate: "", endDate: "", description: "" };
+    setFormData({ ...formData, [section]: [...formData[section], blank] });
   };
 
   const removeItem = (index, section) => {
@@ -56,192 +71,317 @@ export default function ResumeBuilder() {
     }
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () =>
+        setFormData({
+          ...formData,
+          profileImage: file,
+          profileImagePreview: reader.result,
+        });
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () =>
+    setFormData({ ...formData, profileImage: null, profileImagePreview: null });
+
   const validateForm = () => {
     const newErrors = {};
-    const requiredFields = ["fullName", "email", "phone", "address", "dob", "linkedin", "github", "summary", "skills", "languages"];
-    requiredFields.forEach(field => { if (!formData[field].trim()) newErrors[field] = `${field.replace(/([A-Z])/g, " $1")} is required`; });
-
-    formData.education.forEach((edu, index) => {
-      ["school", "degree", "field", "startYear", "endYear"].forEach(field => {
-        if (!edu[field].trim()) newErrors[`edu-${index}-${field}`] = "Required";
-      });
+    const required = [
+      "fullName",
+      "email",
+      "phone",
+      "address",
+      "dob",
+      "linkedin",
+      "github",
+      "summary",
+      "skills",
+      "languages",
+    ];
+    required.forEach((field) => {
+      if (!formData[field].trim()) newErrors[field] = "Required";
     });
-
-    formData.experience.forEach((exp, index) => {
-      const hasData = exp.company.trim() || exp.position.trim() || exp.startDate.trim() || exp.endDate.trim() || exp.description.trim();
-      if (hasData) {
-        ["company", "position", "startDate", "endDate", "description"].forEach(field => {
-          if (!exp[field].trim()) newErrors[`exp-${index}-${field}`] = "Required";
-        });
-      }
-    });
-
+    formData.education.forEach((edu, i) =>
+      ["school", "degree", "field", "startYear", "endYear"].forEach((f) => {
+        if (!edu[f].trim()) newErrors[`edu-${i}-${f}`] = "Required";
+      })
+    );
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
-  if (validateForm()) {
-    console.log("Resume Data:", formData);
-    alert("Resume saved successfully!");
-    if (id) {
-      navigate(`/resume${id}`);
-    } else {
-      alert("Resume ID not found in URL!");
+    if (validateForm()) {
+      localStorage.setItem("resumeData", JSON.stringify(formData));
+      if (id) navigate(`/resume${id}`, { state: { formData } });
     }
-  } else {
-    const missingFields = Object.keys(errors).map(key => {
-      if (key.startsWith("edu-")) return "Education: " + key.split("-")[2];
-      if (key.startsWith("exp-")) return "Experience: " + key.split("-")[2];
-      return key.replace(/([A-Z])/g, " $1");
-    });
-    alert("Please fill in the following required fields:\n\n" + missingFields.join("\n"));
-  }
-};
-
-
-  const inputStyle = (errorKey) => ({ padding: "12px 16px", borderRadius: "8px", background: "rgba(255,255,255,0.1)", border: `1px solid ${errors[errorKey] ? "#ef4444" : "rgba(255,255,255,0.2)"}`, color: "white", fontSize: "14px", outline: "none", width: "100%", boxSizing: "border-box" });
-
-  const smallInputStyle = (errorKey) => ({ padding: "10px 12px", borderRadius: "6px", background: "rgba(255,255,255,0.1)", border: `1px solid ${errors[errorKey] ? "#ef4444" : "rgba(255,255,255,0.2)"}`, color: "white", fontSize: "13px", outline: "none", boxSizing: "border-box" });
-
-  const sectionStyle = { background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "32px", marginBottom: "24px" };
-  const headerStyle = { fontSize: "24px", fontWeight: "bold", color: "white", marginBottom: "20px", display: "flex", alignItems: "center", gap: "12px" };
+  };
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)", padding: "40px 20px" }}>
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: "40px" }}>
-          <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "white", margin: "0 0 10px 0" }}>Resume Builder</h1>
-          <p style={{ fontSize: "18px", color: "#94a3b8", margin: 0 }}>Create a professional resume in minutes</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-800 to-slate-950 py-10 px-4 text-white">
+      <div className="max-w-5xl mx-auto space-y-10">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-white mb-2">Resume Builder</h1>
+          <p className="text-slate-400">Create a professional resume in minutes</p>
         </div>
 
         {/* PERSONAL INFO */}
-        <div style={sectionStyle}>
-          <h2 style={headerStyle}>
-            <div style={{ width: "4px", height: "28px", background: "linear-gradient(to bottom, #06b6d4, #3b82f6)", borderRadius: "2px" }}></div>
+        <section className="bg-slate-900/40 backdrop-blur rounded-2xl border border-white/10 p-8">
+          <h2 className="text-xl font-semibold mb-6 border-b border-slate-700 pb-2">
             Personal Information
           </h2>
 
           {formData.profileImagePreview ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
-              <img src={formData.profileImagePreview} alt="Profile" style={{ width: "80px", height: "80px", borderRadius: "8px", objectFit: "cover" }} />
-              <button onClick={removeImage} style={{ background: "#ef4444", border: "none", borderRadius: "6px", color: "white", padding: "8px 16px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}>
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src={formData.profileImagePreview}
+                alt="Profile"
+                className="w-20 h-20 object-cover rounded-md"
+              />
+              <button
+                onClick={removeImage}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm"
+              >
                 <X size={14} /> Remove
               </button>
             </div>
           ) : (
-            <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 16px", background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.5)", borderRadius: "8px", color: "#93c5fd", fontWeight: "500", fontSize: "13px", marginBottom: "24px" }}>
+            <label className="flex items-center gap-3 cursor-pointer bg-blue-600/20 hover:bg-blue-600/30 border border-blue-400/40 px-4 py-3 rounded-md mb-4 text-blue-300 text-sm font-medium w-fit">
               <Upload size={16} /> Upload Photo (Optional)
-              <input type="file" accept="image/jpeg,image/png" onChange={handleImageUpload} style={{ display: "none" }} />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
             </label>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
-            {["fullName", "email", "phone", "address", "dob", "linkedin", "github", "portfolio"].map((field) => (
+          <div className="grid md:grid-cols-2 gap-4">
+            {[
+              "fullName",
+              "email",
+              "phone",
+              "address",
+              "dob",
+              "linkedin",
+              "github",
+              "portfolio",
+            ].map((field) => (
               <div key={field}>
-                <input type="text" name={field} placeholder={field.replace(/([A-Z])/g, " $1").toUpperCase()} value={formData[field]} onChange={handleChange} style={inputStyle(field)} onFocus={(e) => { if (!errors[field]) e.target.style.borderColor = "#06b6d4"; }} onBlur={(e) => { if (!errors[field]) e.target.style.borderColor = "rgba(255,255,255,0.2)"; }} />
-                {errors[field] && <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px", display: "block" }}>{errors[field]}</span>}
-                {field === "portfolio" && !errors[field] && <span style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", display: "block" }}>Optional</span>}
+                <input
+                  type="text"
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleChange}
+                  placeholder={field.replace(/([A-Z])/g, " $1").toUpperCase()}
+                  className={`w-full bg-slate-800/60 border ${
+                    errors[field] ? "border-red-500" : "border-slate-600"
+                  } rounded-md px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-blue-500`}
+                />
+                {errors[field] && (
+                  <p className="text-xs text-red-400 mt-1">{errors[field]}</p>
+                )}
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* SUMMARY */}
-        <div style={sectionStyle}>
-          <h2 style={headerStyle}>
-            <div style={{ width: "4px", height: "28px", background: "linear-gradient(to bottom, #a855f7, #ec4899)", borderRadius: "2px" }}></div>
+        <section className="bg-slate-900/40 backdrop-blur rounded-2xl border border-white/10 p-8">
+          <h2 className="text-xl font-semibold mb-4 border-b border-slate-700 pb-2">
             Professional Summary
           </h2>
-          <textarea name="summary" placeholder="Write a brief summary about yourself..." value={formData.summary} onChange={handleChange} style={{ ...inputStyle("summary"), minHeight: "100px", resize: "vertical", fontFamily: "inherit" }} onFocus={(e) => { if (!errors.summary) e.target.style.borderColor = "#a855f7"; }} onBlur={(e) => { if (!errors.summary) e.target.style.borderColor = "rgba(255,255,255,0.2)"; }} />
-          {errors.summary && <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px", display: "block" }}>{errors.summary}</span>}
-        </div>
+          <textarea
+            name="summary"
+            value={formData.summary}
+            onChange={handleChange}
+            placeholder="Write a brief summary about yourself..."
+            className={`w-full bg-slate-800/60 border ${
+              errors.summary ? "border-red-500" : "border-slate-600"
+            } rounded-md px-3 py-2 text-sm text-white placeholder-slate-400 h-32 focus:outline-none focus:border-purple-500`}
+          />
+          {errors.summary && (
+            <p className="text-xs text-red-400 mt-1">{errors.summary}</p>
+          )}
+        </section>
 
         {/* EDUCATION */}
-        <div style={sectionStyle}>
-          <h2 style={headerStyle}>
-            <div style={{ width: "4px", height: "28px", background: "linear-gradient(to bottom, #10b981, #34d399)", borderRadius: "2px" }}></div>
-            Education <span style={{ fontSize: "14px", color: "#6ee7b7", fontWeight: "400" }}>(Required)</span>
+        <section className="bg-slate-900/40 backdrop-blur rounded-2xl border border-white/10 p-8">
+          <h2 className="text-xl font-semibold mb-4 border-b border-slate-700 pb-2">
+            Education
           </h2>
-          {formData.education.map((edu, index) => (
-            <div key={index} style={{ padding: "16px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                {["school", "degree"].map(field => (
-                  <div key={field}>
-                    <input type="text" name={field} className="w-full" placeholder={field === "school" ? "School/University" : "Degree (e.g., B.S.)"} value={edu[field]} onChange={(e) => handleArrayChange(index, e, "education")} style={smallInputStyle(`edu-${index}-${field}`)} />
-                    {errors[`edu-${index}-${field}`] && <span style={{ fontSize: "10px", color: "#ef4444", marginTop: "2px", display: "block" }}>Required</span>}
-                  </div>
-                ))}
+          {formData.education.map((edu, i) => (
+            <div key={i} className="space-y-3 border-b border-slate-700 pb-4 mb-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <input
+                  name="school"
+                  placeholder="School / University"
+                  value={edu.school}
+                  onChange={(e) => handleArrayChange(i, e, "education")}
+                  className="bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+                />
+                <input
+                  name="degree"
+                  placeholder="Degree"
+                  value={edu.degree}
+                  onChange={(e) => handleArrayChange(i, e, "education")}
+                  className="bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+                />
               </div>
-              <div style={{ marginBottom: "12px" }}>
-                <input type="text" name="field" placeholder="Field of Study" value={edu.field} onChange={(e) => handleArrayChange(index, e, "education")} style={{ ...smallInputStyle(`edu-${index}-field`), width: "100%" }} />
-                {errors[`edu-${index}-field`] && <span style={{ fontSize: "10px", color: "#ef4444", marginTop: "2px", display: "block" }}>Required</span>}
+              <input
+                name="field"
+                placeholder="Field of Study"
+                value={edu.field}
+                onChange={(e) => handleArrayChange(i, e, "education")}
+                className="w-full bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+              />
+              <div className="grid md:grid-cols-2 gap-4">
+                <input
+                  name="startYear"
+                  placeholder="Start Year"
+                  value={edu.startYear}
+                  onChange={(e) => handleArrayChange(i, e, "education")}
+                  className="bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+                />
+                <input
+                  name="endYear"
+                  placeholder="End Year"
+                  value={edu.endYear}
+                  onChange={(e) => handleArrayChange(i, e, "education")}
+                  className="bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+                />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                {["startYear", "endYear"].map(field => (
-                  <div key={field}>
-                    <input type="text" name={field} className="w-full" placeholder={field === "startYear" ? "Start Year" : "End Year"} value={edu[field]} onChange={(e) => handleArrayChange(index, e, "education")} style={smallInputStyle(`edu-${index}-${field}`)} />
-                    {errors[`edu-${index}-${field}`] && <span style={{ fontSize: "10px", color: "#ef4444", marginTop: "2px", display: "block" }}>Required</span>}
-                  </div>
-                ))}
-              </div>
-              {formData.education.length > 1 && <button onClick={() => removeItem(index, "education")} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px", marginTop: "8px" }}><Trash2 size={14} /> Remove</button>}
+              {formData.education.length > 1 && (
+                <button
+                  onClick={() => removeItem(i, "education")}
+                  className="flex items-center gap-1 text-red-400 text-sm mt-2 hover:text-red-500"
+                >
+                  <Trash2 size={14} /> Remove
+                </button>
+              )}
             </div>
           ))}
-          <button onClick={() => addSection("education")} style={{ background: "rgba(16, 185, 129, 0.2)", border: "1px solid rgba(16, 185, 129, 0.5)", borderRadius: "8px", color: "#6ee7b7", padding: "10px 16px", cursor: "pointer", fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}><Plus size={16} /> Add Education</button>
-        </div>
+          <button
+            onClick={() => addSection("education")}
+            className="flex items-center gap-2 text-green-400 text-sm hover:text-green-300"
+          >
+            <Plus size={14} /> Add Education
+          </button>
+        </section>
 
-        {/* EXPERIENCE */}
-        <div style={sectionStyle}>
-          <h2 style={headerStyle}>
-            <div style={{ width: "4px", height: "28px", background: "linear-gradient(to bottom, #f97316, #ef4444)", borderRadius: "2px" }}></div>
-            Experience <span style={{ fontSize: "14px", color: "#fdba74", fontWeight: "400" }}>(Optional)</span>
+        {/* EXPERIENCE ✅ */}
+        <section className="bg-slate-900/40 backdrop-blur rounded-2xl border border-white/10 p-8">
+          <h2 className="text-xl font-semibold mb-4 border-b border-slate-700 pb-2">
+            Experience
           </h2>
-          {formData.experience.map((exp, index) => (
-            <div key={index} style={{ padding: "16px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                {["company", "position"].map(field => (
-                  <div key={field}>
-                    <input type="text" name={field} className="w-full" placeholder={field === "company" ? "Company" : "Job Position"} value={exp[field]} onChange={(e) => handleArrayChange(index, e, "experience")} style={smallInputStyle(`exp-${index}-${field}`)} />
-                    {errors[`exp-${index}-${field}`] && <span style={{ fontSize: "10px", color: "#ef4444", marginTop: "2px", display: "block" }}>Required</span>}
-                  </div>
-                ))}
+          {formData.experience.map((exp, i) => (
+            <div key={i} className="space-y-3 border-b border-slate-700 pb-4 mb-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <input
+                  name="company"
+                  placeholder="Company Name"
+                  value={exp.company}
+                  onChange={(e) => handleArrayChange(i, e, "experience")}
+                  className="bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+                />
+                <input
+                  name="position"
+                  placeholder="Job Position"
+                  value={exp.position}
+                  onChange={(e) => handleArrayChange(i, e, "experience")}
+                  className="bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+                />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-                {["startDate", "endDate"].map(field => (
-                  <div key={field}>
-                    <input type="text" name={field} className="w-full" placeholder={field === "startDate" ? "Start Date" : "End Date"} value={exp[field]} onChange={(e) => handleArrayChange(index, e, "experience")} style={smallInputStyle(`exp-${index}-${field}`)} />
-                    {errors[`exp-${index}-${field}`] && <span style={{ fontSize: "10px", color: "#ef4444", marginTop: "2px", display: "block" }}>Required</span>}
-                  </div>
-                ))}
+              <div className="grid md:grid-cols-2 gap-4">
+                <input
+                  name="startDate"
+                  placeholder="Start Date"
+                  value={exp.startDate}
+                  onChange={(e) => handleArrayChange(i, e, "experience")}
+                  className="bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+                />
+                <input
+                  name="endDate"
+                  placeholder="End Date"
+                  value={exp.endDate}
+                  onChange={(e) => handleArrayChange(i, e, "experience")}
+                  className="bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400"
+                />
               </div>
-              <div style={{ marginBottom: "12px" }}>
-                <textarea name="description" placeholder="Describe your role, achievements..." value={exp.description} onChange={(e) => handleArrayChange(index, e, "experience")} style={{ ...smallInputStyle(`exp-${index}-description`), width: "100%", minHeight: "80px", resize: "vertical", fontFamily: "inherit" }} />
-                {errors[`exp-${index}-description`] && <span style={{ fontSize: "10px", color: "#ef4444", marginTop: "2px", display: "block" }}>Required</span>}
-              </div>
-              {formData.experience.length > 1 && <button onClick={() => removeItem(index, "experience")} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}><Trash2 size={14} /> Remove</button>}
+              <textarea
+                name="description"
+                placeholder="Describe your role and key achievements..."
+                value={exp.description}
+                onChange={(e) => handleArrayChange(i, e, "experience")}
+                className="w-full bg-slate-800/60 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400 h-24"
+              />
+              {formData.experience.length > 1 && (
+                <button
+                  onClick={() => removeItem(i, "experience")}
+                  className="flex items-center gap-1 text-red-400 text-sm mt-2 hover:text-red-500"
+                >
+                  <Trash2 size={14} /> Remove
+                </button>
+              )}
             </div>
           ))}
-          <button onClick={() => addSection("experience")} style={{ background: "rgba(249, 115, 22, 0.2)", border: "1px solid rgba(249, 115, 22, 0.5)", borderRadius: "8px", color: "#fdba74", padding: "10px 16px", cursor: "pointer", fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}><Plus size={16} /> Add Experience</button>
-        </div>
+          <button
+            onClick={() => addSection("experience")}
+            className="flex items-center gap-2 text-orange-400 text-sm hover:text-orange-300"
+          >
+            <Plus size={14} /> Add Experience
+          </button>
+        </section>
 
         {/* SKILLS / LANGUAGES / CERTIFICATIONS */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "32px" }}>
-          {[{ label: "Skills", name: "skills", gradient: "linear-gradient(to bottom, #3b82f6, #06b6d4)", req: true }, { label: "Languages", name: "languages", gradient: "linear-gradient(to bottom, #ec4899, #f43f5e)", req: true }, { label: "Certifications", name: "certifications", gradient: "linear-gradient(to bottom, #eab308, #f97316)", req: false }].map((section) => (
-            <div key={section.name} style={{ ...sectionStyle, marginBottom: 0 }}>
-              <h3 style={{ fontSize: "18px", fontWeight: "bold", color: "white", marginBottom: "16px", display: "flex", alignItems: "center", gap: "10px", margin: 0}}>
-                <div style={{ width: "3px", height: "20px", background: section.gradient, borderRadius: "2px" }}></div>
-                {section.label} {!section.req && <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "400" }}>(Optional)</span>}
-              </h3>
-              <textarea name={section.name} placeholder={`e.g., ${section.label === "Skills" ? "JavaScript, React, Python" : section.label === "Languages" ? "English, Spanish" : "AWS Certified"}`} value={formData[section.name]} onChange={handleChange} style={{ ...inputStyle(section.name), minHeight: "120px", resize: "vertical", fontFamily: "inherit" }} />
-              {errors[section.name] && <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px", display: "block" }}>{errors[section.name]}</span>}
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { label: "Skills", name: "skills" },
+            { label: "Languages", name: "languages" },
+            { label: "Certifications", name: "certifications" },
+          ].map((section) => (
+            <div
+              key={section.name}
+              className="bg-slate-900/40 backdrop-blur rounded-2xl border border-white/10 p-6"
+            >
+              <h3 className="text-lg font-semibold mb-3">{section.label}</h3>
+              <textarea
+                name={section.name}
+                value={formData[section.name]}
+                onChange={handleChange}
+                placeholder={`e.g. ${
+                  section.name === "skills"
+                    ? "React, JavaScript"
+                    : section.name === "languages"
+                    ? "English, Spanish"
+                    : "AWS Certified"
+                }`}
+                className={`w-full bg-slate-800/60 border ${
+                  errors[section.name] ? "border-red-500" : "border-slate-600"
+                } rounded-md px-3 py-2 text-sm text-white placeholder-slate-400 h-32`}
+              />
+              {errors[section.name] && (
+                <p className="text-xs text-red-400 mt-1">
+                  {errors[section.name]}
+                </p>
+              )}
             </div>
           ))}
         </div>
 
         {/* SUBMIT */}
-        <div style={{ display: "flex", justifyContent: "center", paddingTop: "16px" }}>
-          <button onClick={handleSubmit} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px 32px", borderRadius: "8px", background: "linear-gradient(to right, #06b6d4, #3b82f6)", color: "white", fontWeight: "bold", fontSize: "16px", border: "none", cursor: "pointer", boxShadow: "0 4px 15px rgba(6, 182, 212, 0.4)", transition: "all 0.3s" }} onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 6px 20px rgba(6, 182, 212, 0.6)"; }} onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "0 4px 15px rgba(6, 182, 212, 0.4)"; }}><Download size={20} /> Generate Resume</button>
+        <div className="text-center">
+          <button
+            onClick={handleSubmit}
+            className="flex items-center gap-2 mx-auto bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold px-6 py-3 rounded-md shadow-md transition-transform hover:scale-105"
+          >
+            <Download size={18} /> Generate Resume
+          </button>
         </div>
       </div>
     </div>

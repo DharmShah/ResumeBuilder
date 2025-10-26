@@ -1,150 +1,238 @@
 import React, { useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { Mail, Phone, Linkedin, Github, MapPin, Globe } from "lucide-react";
 
 const Resume1 = () => {
-  const resumeRef = useRef(); // ✅ Reference to capture resume
+  const resumeRef = useRef();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const handleDownload = () => {
-    const input = resumeRef.current;
-    html2canvas(input, { scale: 2 }).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "pt", "a4"); // portrait, points, A4
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save("Resume_Nadia_Smith.pdf");
-    });
+  const idMatch = location.pathname.match(/resume(\d+)/);
+  const id = idMatch ? idMatch[1] : null;
+
+  const formData =
+    location.state?.formData ||
+    JSON.parse(localStorage.getItem("resumeData") || "{}");
+
+  if (!formData || Object.keys(formData).length === 0) {
+    return (
+      <p className="text-center text-red-600 mt-10">
+        ⚠️ No data received. Please go back and fill the form.
+      </p>
+    );
+  }
+
+ const handleDownload = () => {
+  const input = resumeRef.current;
+
+  html2canvas(input, { scale: 3, useCORS: true }).then((canvas) => {
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "pt", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // Calculate the number of pages
+    const imgProps = canvas.width / canvas.height;
+    const pdfImgHeight = pdfWidth / imgProps;
+
+    let heightLeft = pdfImgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfImgHeight);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - pdfImgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfImgHeight);
+      heightLeft -= pdfHeight;
+    }
+
+    pdf.save(`${formData.fullName || "Resume"}.pdf`);
+  });
+};
+
+  const handleEdit = () => {
+    localStorage.setItem("resumeData", JSON.stringify(formData));
+    navigate(`/form?id=${id}`, { state: { formData } });
   };
 
   return (
-    <div className="p-4">     
-      {/* Resume Content */}
+    <div className="bg-gray-100 min-h-screen py-6">
       <div
-        ref={resumeRef} // ✅ Attach ref here for PDF capture
-        className="w-[8.5in] mx-auto border p-[15px] bg-white text-gray-800 font-sans leading-tight print:m-0 print:p-[0.5in]"
+        ref={resumeRef}
+        className="w-[8.5in] mx-auto bg-white text-black p-[40px] leading-relaxed text-[10.5pt] font-serif shadow-lg"
       >
-        {/* Header */}
-        <header className="text-center" name="header">
-          <h1 className="text-[26pt] font-bold text-black mb-2" name="name">
-            Nadia Smith
+        {/* HEADER */}
+        <header className="text-center mb-6">
+          {formData.profileImagePreview && (
+            <div className="flex justify-center mb-3">
+              <img
+                src={formData.profileImagePreview}
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover border border-gray-300"
+              />
+            </div>
+          )}
+
+          <h1 className="text-[20pt] font-bold uppercase tracking-wide mb-2">
+            {formData.fullName || "Your Name"}
           </h1>
-          <div className="flex justify-center text-[9pt] mb-5 pb-1" name="contact-info">
-            <span className="mx-2 whitespace-nowrap" name="email">
-              <i className="fas fa-envelope mr-1 text-gray-800"></i> nadia@smith.com
-            </span>
-            <span className="mx-2 whitespace-nowrap" name="phone">
-              <i className="fas fa-phone mr-1 text-gray-800"></i> 555-555-5555
-            </span>
-            <span className="mx-2 whitespace-nowrap" name="linkedin">
-              <i className="fab fa-linkedin mr-1 text-gray-800"></i> linkedin.com/in/youracct/
-            </span>
+
+          {/* CONTACT DETAILS */}
+          <div className="flex flex-wrap justify-center gap-4 text-[9pt] text-gray-700">
+            {formData.email && (
+              <span className="flex items-center gap-[5px] mr-[15px]">
+                <Mail size={14} style={{ display: "inline-block" }} />
+                {formData.email}
+              </span>
+            )}
+            {formData.phone && (
+              <span className="flex items-center gap-[5px] mr-[15px]">
+                <Phone size={14} style={{ display: "inline-block" }} />
+                {formData.phone}
+              </span>
+            )}
+            {formData.linkedin && (
+              <span className="flex items-center gap-[5px] mr-[15px]">
+                <Linkedin size={14} style={{ display: "inline-block" }} />
+                {formData.linkedin}
+              </span>
+            )}
+            {formData.github && (
+              <span className="flex items-center gap-[5px] mr-[15px]">
+                <Github size={14} style={{ display: "inline-block" }} />
+                {formData.github}
+              </span>
+            )}
+            {formData.portfolio && (
+              <span className="flex items-center gap-[5px] mr-[15px]">
+                <Globe size={14} style={{ display: "inline-block" }} />
+                {formData.portfolio}
+              </span>
+            )}
+            {formData.address && (
+              <span className="flex items-center gap-[5px] mr-[15px]">
+                <MapPin size={14} style={{ display: "inline-block" }} />
+                {formData.address}
+              </span>
+            )}
           </div>
         </header>
 
-        <hr className="border-t border-black my-4" />
+        {/* SUMMARY */}
+        {formData.summary && (
+          <section className="mb-5">
+            <h2 className="text-[10pt] font-bold uppercase border-t border-b border-black text-center py-1">
+              Summary
+            </h2>
+            <p className="mt-2 text-justify">{formData.summary}</p>
+          </section>
+        )}
 
-        {/* Summary Section */}
-        <section className="mb-6">
-          <h2 className="text-[11pt] font-bold text-black uppercase tracking-[0.5px] border-b-2 border-black text-center pb-1 mb-2">
-            Summary
-          </h2>
-          <p className="text-[10pt] text-justify">
-            Results-oriented finance professional with over 10 years of experience in publicly traded and privately held enterprises. 
-            Proven track record in complex and capital-intensive global industries, delivering value and innovation in Finance, 
-            Strategy, and Corporate Planning.
-          </p>
-        </section>
+        {/* EDUCATION */}
+        {formData.education && formData.education.length > 0 && (
+          <section className="mb-5">
+            <h2 className="text-[10pt] font-bold uppercase border-t border-b border-black text-center py-1">
+              Education
+            </h2>
+            {formData.education.map((edu, index) => (
+              <div key={index} className="mt-3">
+                <div className="flex justify-between items-end">
+                  <h3 className="font-bold uppercase text-[10pt]">
+                    {edu.school || "Institution Name"}
+                  </h3>
+                  <span className="text-[9pt]">
+                    {edu.startYear || "Start"} – {edu.endYear || "End"}
+                  </span>
+                </div>
+                <p className="italic text-[10pt]">
+                  {edu.degree || "Degree"}
+                  {edu.field && `, ${edu.field}`}
+                </p>
+              </div>
+            ))}
+          </section>
+        )}
 
-        <hr className="border-t border-black my-3" />
+        {/* WORK EXPERIENCE */}
+        {formData.experience && formData.experience.length > 0 && (
+          <section className="mb-5">
+            <h2 className="text-[10pt] font-bold uppercase border-t border-b border-black text-center py-1">
+              Work Experience
+            </h2>
+            {formData.experience.map((exp, index) => (
+              <div key={index} className="mt-3">
+                <div className="flex justify-between items-end">
+                  <h3 className="font-bold uppercase text-[10pt]">
+                    {exp.company || "Company Name"}
+                  </h3>
+                  <span className="text-[9pt]">
+                    {exp.startDate || "Start"} – {exp.endDate || "End"}
+                  </span>
+                </div>
+                <p className="italic text-[10pt] mb-1">
+                  {exp.position || "Position"}
+                </p>
+                {exp.description && (
+                  <ul className="list-disc list-inside text-[9.5pt]">
+                    {exp.description.split("\n").map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </section>
+        )}
 
-        {/* Education Section */}
-        <section className="mb-6">
-          <h2 className="text-[11pt] font-bold text-black uppercase tracking-[0.5px] border-b-2 border-black text-center pb-1 mb-2">
-            Education
-          </h2>
+        {/* SKILLS */}
+        {formData.skills && (
+          <section className="mb-5">
+            <h2 className="text-[10pt] font-bold uppercase border-t border-b border-black text-center py-1">
+              Skills
+            </h2>
+            <p className="mt-2">{formData.skills}</p>
+          </section>
+        )}
 
-          {/* Harvard */}
-          <div className="mb-4">
-            <div className="flex justify-between items-end mt-2">
-              <h3 className="text-[10.5pt] font-bold text-black m-0 leading-tight">
-                HARVARD UNIVERSITY EXTENSION SCHOOL
-              </h3>
-              <span className="text-[10pt] whitespace-nowrap">2014 – 2016</span>
-            </div>
-            <p className="text-[10pt] italic mb-1">Master of Liberal Arts, Management</p>
-            <ul className="list-disc list-inside text-[10pt] leading-snug">
-              <li>Recipient of Dean's List Academic Achievement Award</li>
-              <li>Selected for the Venture Incubation Program at Harvard Innovation Lab</li>
-              <li>Winner of Stretch Award 2016</li>
-            </ul>
-          </div>
+        {/* LANGUAGES */}
+        {formData.languages && (
+          <section className="mb-5">
+            <h2 className="text-[10pt] font-bold uppercase border-t border-b border-black text-center py-1">
+              Languages
+            </h2>
+            <p className="mt-2">{formData.languages}</p>
+          </section>
+        )}
 
-          {/* UNAM */}
-          <div className="mb-4">
-            <div className="flex justify-between items-end mt-2">
-              <h3 className="text-[10.5pt] font-bold text-black m-0 leading-tight">
-                UNIVERSIDAD NACIONAL AUTONOMA DE MEXICO
-              </h3>
-              <span className="text-[10pt] whitespace-nowrap">2001 – 2006</span>
-            </div>
-            <p className="text-[10pt] italic mb-1">Bachelor of Business Administration in Marketing</p>
-            <ul className="list-disc list-inside text-[10pt] leading-snug">
-              <li>Graduated from Honors Program, Rank 1</li>
-              <li>College Student of the Year 2006 – Expansion Time Warner Magazine</li>
-              <li>Recipient of L'Oréal Excellence Award 2006</li>
-            </ul>
-          </div>
-        </section>
-
-        <hr className="border-t border-black my-3" />
-
-        {/* Work Experience */}
-        <section>
-          <h2 className="text-[11pt] font-bold text-black uppercase tracking-[0.5px] border-b-2 border-black text-center pb-1 mb-2">
-            Work Experience
-          </h2>
-
-          {/* Agenda28 */}
-          <div className="mb-4">
-            <div className="flex justify-between items-end mt-2">
-              <h3 className="text-[10.5pt] font-bold text-black">
-                AGENDA28 <span className="ml-2 text-[10.5pt] font-normal">CO-FOUNDER / DESIGN STRATEGY DIRECTOR</span>
-              </h3>
-              <span className="text-[10pt] whitespace-nowrap">Sep 2012 – present</span>
-            </div>
-            <ul className="list-disc list-inside text-[10pt] leading-snug">
-              <li>Founded design studio specialized in social impact.</li>
-              <li>Led 20 design projects for nonprofits and social enterprises worldwide.</li>
-              <li>Won Most Innovative Idea at Harvard Conference, May 2015.</li>
-            </ul>
-          </div>
-
-          {/* Entreprise de Mexico */}
-          <div className="mb-4">
-            <div className="flex justify-between items-end mt-2">
-              <h3 className="text-[10.5pt] font-bold text-black">
-                ENTERPRESSE DE MEXICO <span className="ml-2 text-[10.5pt] font-normal">MARKETING & SALES DIRECTOR</span>
-              </h3>
-              <span className="text-[10pt] whitespace-nowrap">Nov 2008 – Jan 2014</span>
-            </div>
-            <ul className="list-disc list-inside text-[10pt] leading-snug">
-              <li>Led the Marketing and Sales teams achieving 163% growth in 5 years.</li>
-              <li>Redesigned corporate identity and executed online campaigns.</li>
-              <li>Implemented new Sales Methodology, CRM, and Loyalty Program.</li>
-              <li>Developed Corporate Strategic Planning methodology.</li>
-              <li>Expanded operations to 9 new countries in Latin America.</li>
-            </ul>
-          </div>
-        </section>
+        {/* CERTIFICATIONS */}
+        {formData.certifications && (
+          <section>
+            <h2 className="text-[10pt] font-bold uppercase border-t border-b border-black text-center py-1">
+              Certifications
+            </h2>
+            <p className="mt-2">{formData.certifications}</p>
+          </section>
+        )}
       </div>
-       {/* Download Button */}
-      <div className="flex justify-center mt-[20px]">
+
+      {/* ACTION BUTTONS */}
+      <div className="flex justify-center gap-4 mt-5">
         <button
           onClick={handleDownload}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
         >
           Download Resume
+        </button>
+
+        <button
+          onClick={handleEdit}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition"
+        >
+          Edit Information
         </button>
       </div>
     </div>

@@ -28,6 +28,8 @@ for python server
 1) npm install
 2) npm install -g vite
 3) npm install react-icons
+4) npm install lucide-react
+
 
 
 #how to pull the repo 

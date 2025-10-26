@@ -7,8 +7,10 @@ import resume5 from "../assets/resume5.png";
 import resume6 from "../assets/resume6.png";
 import resume7 from "../assets/resume7.png";
 import resume8 from "../assets/resume8.png";
+import { useNavigate } from "react-router-dom";
 
 export default function Index() {
+  const navigate = useNavigate();
   const resumes = [
     { img: resume1, title: "Professional", desc: "Clean, professional layout for corporate jobs." },
     { img: resume2, title: "Creative", desc: "Colorful, eye-catching template for creative roles." },
@@ -64,7 +66,7 @@ export default function Index() {
 
       {/* CTA Button */}
       <div className="text-center mb-16">
-        <button className="px-14 py-4 rounded-full text-lg md:text-xl font-bold text-white mt-[10px] shadow-xl transform transition-all duration-300 hover:scale-110 hover:shadow-2xl">
+        <button onClick={() => navigate("/airesume")} className="px-14 py-4 rounded-full text-lg md:text-xl font-bold text-white mt-[10px] shadow-xl transform transition-all duration-300 hover:scale-110 hover:shadow-2xl">
           Start Building Your Resume 🚀
         </button>
       </div>
