@@ -29,6 +29,8 @@ for python server
 2) npm install -g vite
 3) npm install react-icons
 4) npm install lucide-react
+5) npm install tailwind-scrollbar
+
 
 
 

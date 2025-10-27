@@ -175,6 +175,54 @@ def speech_to_text():
             pass
 
 
+
+@app.route("/generate-summary", methods=["POST"])
+def generate_summary():
+    data = request.get_json(silent=True) or {}
+
+    # Convert answers into a readable format for GPT
+    user_details = "\n".join([f"{k} {v}" for k, v in data.items()])
+
+    prompt = f"""
+You are a professional resume writer. Based on the user's responses, generate a polished, well-structured resume summary and full resume content in Markdown.
+Make sure to include the following sections if applicable:
+- Professional Summary
+- Education
+- Experience/Projects
+- Skills
+- Certifications
+- Languages
+- Contact Info
+
+Here are the user's details:
+{user_details}
+
+Format the output clearly with **bold headings** and bullet points.
+"""
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7,
+    }
+
+    try:
+        response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        summary = result["choices"][0]["message"]["content"]
+        return jsonify({"summary": summary})
+    except Exception as e:
+        print("❌ Summary generation error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+
 # -------------------
 # Run server
 # -------------------
