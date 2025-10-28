@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 
 const ResumeBot = () => {
@@ -9,7 +9,7 @@ const ResumeBot = () => {
     "Your phone number?",
     "LinkedIn profile link (optional)?",
     "GitHub profile link (optional)?",
-    "Portfolio or personal website (optional)?",
+    "Portfolio or other link (optional)?",
     "Tell me about your education background.",
     "Tell me about your experience or projects.",
     "List your skills (comma separated).",
@@ -23,8 +23,23 @@ const ResumeBot = () => {
   const [chat, setChat] = useState([]);
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
+  const [scale, setScale] = useState(1); // <-- for auto-scaling
 
-  // Dynamic input type based on question
+  const resumeRef = useRef(null);
+
+  // Adjust scale if content exceeds one page
+  useEffect(() => {
+    if (!resumeRef.current) return;
+    const contentHeight = resumeRef.current.scrollHeight;
+    const maxHeight = 11.69 * 96; // A4 in px (~1122px @96dpi)
+    if (contentHeight > maxHeight) {
+      const newScale = Math.max(0.8, maxHeight / contentHeight);
+      setScale(newScale);
+    } else {
+      setScale(1);
+    }
+  }, [summary, answers]);
+
   const getInputType = () => {
     const q = questions[current].toLowerCase();
     if (q.includes("date of birth")) return "date";
@@ -34,13 +49,10 @@ const ResumeBot = () => {
     return "text";
   };
 
-  // Handle input submission
   const handleNext = async () => {
     if (!input.trim()) return;
-
     const newAnswers = { ...answers, [questions[current]]: input };
     setAnswers(newAnswers);
-
     setChat((prev) => [
       ...prev,
       { sender: "user", text: input },
@@ -52,7 +64,6 @@ const ResumeBot = () => {
             : "Generating your professional resume... 🧠",
       },
     ]);
-
     setInput("");
 
     if (current + 1 < questions.length) {
@@ -66,14 +77,16 @@ const ResumeBot = () => {
           body: JSON.stringify(newAnswers),
         });
         const data = await response.json();
-        if (data.summary) {
-          const cleanText = data.summary
-            .replace(/[#`*]/g, "") // remove markdown symbols
-            .replace(/\n{2,}/g, "\n\n"); // clean extra newlines
-          setSummary(cleanText);
-        } else {
-          setSummary("❌ No summary generated.");
-        }
+
+        let clean = data.summary || "";
+        clean = clean
+          .replace(/[#_*`>-]/g, "")
+          .replace(/Professional Resume/gi, "")
+          .replace(/markdown/gi, "")
+          .replace(/Feel free to modify.*/gi, "")
+          .replace(/\n{3,}/g, "\n\n")
+          .trim();
+        setSummary(clean);
       } catch (err) {
         console.error("Error generating summary:", err);
         setSummary("⚠️ Error generating summary. Check backend logs.");
@@ -83,18 +96,19 @@ const ResumeBot = () => {
     }
   };
 
-  // Download as PDF
   const handleDownload = () => {
-    const resumeElement = document.getElementById("resume");
+    const resumeElement = document.getElementById("printable-resume");
     const opt = {
-      margin: 0.5,
-      filename: "Resume.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
+      margin: 0.4,
+      filename: "Professional_Resume.pdf",
+      image: { type: "jpeg", quality: 1 },
+      html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
     };
-    html2pdf().from(resumeElement).set(opt).save();
+    html2pdf().set(opt).from(resumeElement).save();
   };
+
+  const get = (q) => answers[q] || "";
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-900 text-white rounded-2xl shadow-xl">
@@ -105,9 +119,9 @@ const ResumeBot = () => {
           </h2>
 
           <div className="bg-gray-800 p-4 rounded-md h-96 overflow-y-auto mb-4">
-            {chat.map((msg, index) => (
+            {chat.map((msg, i) => (
               <div
-                key={index}
+                key={i}
                 className={`mb-3 flex ${
                   msg.sender === "user" ? "justify-end" : "justify-start"
                 }`}
@@ -123,7 +137,6 @@ const ResumeBot = () => {
                 </div>
               </div>
             ))}
-
             {chat.length === 0 && (
               <div className="text-gray-400 italic">
                 👋 Hi! Let's create your resume step by step.
@@ -137,7 +150,7 @@ const ResumeBot = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleNext()}
-              placeholder="Enter Your Name: "
+              placeholder="Enter your response..."
               className="flex-1 p-2 text-black rounded-md"
             />
             <button
@@ -157,22 +170,168 @@ const ResumeBot = () => {
       )}
 
       {summary && (
-        <div
-          id="resume"
-          className="mt-8 bg-white text-black p-8 rounded-lg shadow-lg"
-        >
-          <h1 className="text-3xl font-bold mb-2 text-center">
-            Professional Resume
-          </h1>
-          <hr className="mb-4 border-gray-400" />
-          <div className="whitespace-pre-wrap leading-relaxed text-gray-800">
-            {summary}
+        <div className="mt-8 bg-white text-black p-0 rounded-lg shadow-lg overflow-hidden">
+          <div
+            id="printable-resume"
+            ref={resumeRef}
+            style={{
+              fontFamily: "Arial, sans-serif",
+              padding: "0.8in",
+              width: "8.27in",
+              height: "11.69in",
+              transform: `scale(${scale})`,
+              transformOrigin: "top center",
+              color: "#000",
+              lineHeight: "1.4",
+            }}
+          >
+            <h1
+              style={{
+                fontSize: "26px",
+                textAlign: "center",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                marginBottom: "6px",
+              }}
+            >
+              {get("What's your full name?")}
+            </h1>
+            <hr style={{ border: "1px solid #000", marginBottom: "10px" }} />
+            <p
+              style={{
+                textAlign: "center",
+                fontSize: "12px",
+                marginBottom: "18px",
+              }}
+            >
+              📧 {get("Your email address?")} | 📞 {get("Your phone number?")}
+              {get("GitHub profile link (optional)?") && (
+                <>
+                  {" | "}
+                  <a
+                    href={get("GitHub profile link (optional)?")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    GitHub
+                  </a>
+                </>
+              )}
+              {get("LinkedIn profile link (optional)?") && (
+                <>
+                  {" | "}
+                  <a
+                    href={get("LinkedIn profile link (optional)?")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    LinkedIn
+                  </a>
+                </>
+              )}
+              {get("Portfolio or other link (optional)?") && (
+                <>
+                  {" | "}
+                  <a
+                    href={get("Portfolio or other link (optional)?")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Portfolio
+                  </a>
+                </>
+              )}
+            </p>
+
+            <h2
+              style={{
+                fontSize: "16px",
+                fontWeight: "bold",
+                borderBottom: "1px solid #000",
+                marginBottom: "6px",
+                marginTop: "12px",
+              }}
+            >
+              Education
+            </h2>
+            <p style={{ fontSize: "13px", marginBottom: "8px" }}>
+              {get("Tell me about your education background.")}
+            </p>
+
+            <h2
+              style={{
+                fontSize: "16px",
+                fontWeight: "bold",
+                borderBottom: "1px solid #000",
+                marginBottom: "6px",
+                marginTop: "12px",
+              }}
+            >
+              Experience / Projects
+            </h2>
+            <p style={{ fontSize: "13px", marginBottom: "8px" }}>
+              {get("Tell me about your experience or projects.")}
+            </p>
+
+            <h2
+              style={{
+                fontSize: "16px",
+                fontWeight: "bold",
+                borderBottom: "1px solid #000",
+                marginBottom: "6px",
+                marginTop: "12px",
+              }}
+            >
+              Skills
+            </h2>
+            <p style={{ fontSize: "13px" }}>
+              {get("List your skills (comma separated).")}
+            </p>
+
+            {get("Any certifications you’ve earned?") && (
+              <>
+                <h2
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    borderBottom: "1px solid #000",
+                    marginBottom: "6px",
+                    marginTop: "12px",
+                  }}
+                >
+                  Certifications
+                </h2>
+                <p style={{ fontSize: "13px" }}>
+                  {get("Any certifications you’ve earned?")}
+                </p>
+              </>
+            )}
+
+            {get("Languages you know?") && (
+              <>
+                <h2
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    borderBottom: "1px solid #000",
+                    marginBottom: "6px",
+                    marginTop: "12px",
+                  }}
+                >
+                  Languages
+                </h2>
+                <p style={{ fontSize: "13px" }}>
+                  {get("Languages you know?")}
+                </p>
+              </>
+            )}
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center mb-6">
             <button
               onClick={handleDownload}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
             >
               ⬇️ Download PDF
             </button>
