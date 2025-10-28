@@ -25,18 +25,31 @@ export default function ResumeCard() {
     { id: 9, name: "Custom Resume", img: custome },
   ];
 
-  const handleClick = (id) => {
-    if (id === 9) {
-      navigate("/resume9");
-    } else {
-      navigate(`/form?id=${id}`);
-    }
-  };
+const handleClick = (id) => {
+  // Clear ALL saved resume data
+  localStorage.removeItem("formData");
+  localStorage.removeItem("resumeData");
+  sessionStorage.removeItem("formData");
+
+  // If you ever store individual fields
+  Object.keys(localStorage)
+    .filter((key) => key.includes("resumeField"))
+    .forEach((key) => localStorage.removeItem(key));
+
+  // Navigate to selected template
+  if (id === 9) {
+    navigate("/resume9");
+  } else {
+    navigate(`/form?id=${id}`);
+  }
+};
+
+
 
   return (
-    <div className="font-poppins bg-[#F9FAFB] w-[1490px] ml-[-100px] px-10 py-20 flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="font-poppins bg-[#F9FAFB] w-[1180px] ml-[1px] px-10 py-20 flex flex-col items-center justify-center relative overflow-hidden">
       {/* Decorative blobs (same look as index) */}
-      <div className="absolute -top-32 -left-32 w-80 h-80 bg-[#19485F] opacity-10 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="absolute w-80 h-80 bg-[#19485F] opacity-10 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#FFB347] opacity-10 rounded-full blur-3xl animate-pulse-slow"></div>
 
       {/* Heading */}
@@ -45,7 +58,7 @@ export default function ResumeCard() {
       </h1>
 
       {/* Grid (3 columns, generous gaps) */}
-      <div className="grid grid-cols-3 gap-x-20 gap-y-28 z-10">
+      <div className="grid grid-cols-3 gap-x-20 gap-y-28 z-10 ml-[-15px]">
         <style>
           {`
             @keyframes gradientFlow {
@@ -111,15 +124,9 @@ export default function ResumeCard() {
               } ${isCustom ? "custom-shimmer" : "flow-card"}`}
               style={{ width: 350 }}
             >
-              {/* Badge for custom */}
-              {isCustom && (
-                <div className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-[#19485F] text-[#F7F7EC] font-semibold text-sm shadow-sm">
-                  CUSTOM
-                </div>
-              )}
 
               {/* Image wrapper: ensures full image visible */}
-              <div className="relative w-full bg-white flex items-center justify-center" style={{ height: 480 }}>
+              <div className="relative w-full bg-wheat flex items-center justify-center" style={{ height: 480 }}>
                 <img
                   src={resume.img}
                   alt={resume.name}

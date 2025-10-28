@@ -16,7 +16,7 @@ export default function ResumeBuilder() {
     dob: "",
     linkedin: "",
     github: "",
-    portfolio: "",
+    otherLink: "",
     profileImage: null,
     profileImagePreview: null,
     summary: "",
@@ -96,8 +96,6 @@ export default function ResumeBuilder() {
       "phone",
       "address",
       "dob",
-      "linkedin",
-      "github",
       "summary",
       "skills",
       "languages",
@@ -125,7 +123,7 @@ export default function ResumeBuilder() {
     <div className="min-h-screen bg-gradient-to-br from-slate-800 to-slate-950 py-10 px-4 text-white">
       <div className="max-w-5xl mx-auto space-y-10">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">Resume Builder</h1>
+          <h1 className="text-4xl font-bold text-black mb-2">Resume Builder</h1>
           <p className="text-slate-400">Create a professional resume in minutes</p>
         </div>
 
@@ -170,7 +168,7 @@ export default function ResumeBuilder() {
               "dob",
               "linkedin",
               "github",
-              "portfolio",
+              "otherLink",
             ].map((field) => (
               <div key={field}>
                 <input

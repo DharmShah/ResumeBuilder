@@ -12,15 +12,15 @@ export default function Signup() {
       <div className="absolute bottom-[-120px] right-[-120px] w-[350px] h-[350px] bg-[#D9E0A4]/20 rounded-full blur-3xl animate-[pulseSlow_6s_ease_in_out_infinite]"></div>
 
       {/* Book-style container */}
-      <div className="relative flex w-[75%] max-w-6xl h-[75vh] rounded-[40px] shadow-2xl overflow-hidden border border-[#D9E0A4]/30 transform perspective-[1200px] bg-[#1F5C72]/90 backdrop-blur-sm">
+      <div className="relative flex w-[80%] max-w-6xl h-[80vh] rounded-[40px] shadow-2xl overflow-hidden border border-[#D9E0A4]/30 transform perspective-[1200px] bg-[#1F5C72]/90 backdrop-blur-sm">
         
         {/* Left page (form) */}
         <div className="w-1/2 flex justify-center items-center bg-[#1F5C72]/80">
           <form className="w-[80%] max-w-sm text-[#D9E0A4]">
-            <h2 className="text-3xl font-bold mb-8 text-center">Create Account</h2>
+            <h2 className="text-3xl font-bold text-center">Create Account</h2>
 
-            <div className="mb-5">
-              <label className="block mb-2 text-sm font-semibold">Full Name</label>
+            <div>
+              <label className="block text-sm font-semibold">Full Name</label>
               <input
                 type="text"
                 placeholder="Enter your name"
@@ -29,7 +29,7 @@ export default function Signup() {
               />
             </div>
 
-            <div className="mb-5">
+            <div>
               <label className="block mb-2 text-sm font-semibold">Email</label>
               <input
                 type="email"
@@ -39,7 +39,7 @@ export default function Signup() {
               />
             </div>
 
-            <div className="mb-5">
+            <div>
               <label className="block mb-2 text-sm font-semibold">Password</label>
               <input
                 type="password"
@@ -49,7 +49,7 @@ export default function Signup() {
               />
             </div>
 
-            <div className="mb-6">
+            <div>
               <label className="block mb-2 text-sm font-semibold">Confirm Password</label>
               <input
                 type="password"
@@ -61,20 +61,10 @@ export default function Signup() {
 
             <button
               type="submit"
-              className="w-full bg-[#FFB347] text-[#19485F] font-bold py-3 rounded-full hover:bg-[#FFA533] transition-all duration-300"
+              className="w-full mt-[15px] bg-[#FFB347] text-[#19485F] font-bold py-3 rounded-full hover:bg-[#FFA533] transition-all duration-300"
             >
               Sign Up
-            </button>
-
-            <p className="text-center text-sm mt-6">
-              Already have an account?{" "}
-              <span
-                onClick={() => navigate("/login")}
-                className="text-[#FFB347] cursor-pointer font-semibold hover:underline"
-              >
-                Login
-              </span>
-            </p>
+            </button>            
           </form>
         </div>
 
@@ -86,7 +76,17 @@ export default function Signup() {
           <p className="text-lg text-center leading-relaxed opacity-90 max-w-md">
             Create your personalized resume, get feedback instantly, and build your professional profile with ease.
           </p>
+          <p className="text-center text-sm mt-6">
+              Already have an account?{" "}
+              <span
+                onClick={() => navigate("/login")}
+                className="text-[#FFB347] cursor-pointer font-semibold hover:underline"
+              >
+                Login
+              </span>
+            </p>
         </div>
+        
 
         {/* Center fold (book spine) */}
         <div className="absolute left-1/2 top-0 h-full w-[3px] bg-gradient-to-b from-[#D9E0A4]/10 via-[#D9E0A4]/40 to-[#D9E0A4]/10"></div>

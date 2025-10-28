@@ -5,7 +5,7 @@ export default function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="flex w-[1460px] ml-[-100px] mt-[-20px] items-center justify-between bg-[#19485F] px-[15px] py-[10px] shadow-md">
+    <header className="flex w-[1200px] mt-[-20px] items-center justify-between bg-[#19485F] px-[15px] py-[10px] shadow-md">
 
       {/* Left: Logo + Title */}
       <div
@@ -20,7 +20,7 @@ export default function Header() {
         <input
           type="text"
           placeholder="Search templates..."
-          className="w-full max-w-lg p-[15px] text-base border-2 border-[#D9E0A4] rounded-full 
+          className="w-[480px] max-w-lg p-[10px] text-base border-2 border-[#D9E0A4] rounded-full 
           focus:outline-none focus:ring-2 focus:ring-[#D9E0A4] 
           bg-[#1F5C72] text-[#D9E0A4] placeholder-[#C5D2B3]"
         />
@@ -31,7 +31,7 @@ export default function Header() {
         <button
           onClick={() => navigate('/resumeBot')}
           className="px-6 py-2 bg-[#FFB347] text-[#19485F] rounded-lg font-semibold 
-          hover:bg-[#FFA533] transition w-[200px]"
+          hover:bg-[#FFA533] transition w-[210px]"
         >
           Review Resume
         </button>

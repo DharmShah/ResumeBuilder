@@ -22,12 +22,21 @@ export default function Login() {
           <p className="text-lg text-center leading-relaxed opacity-90 max-w-md">
             Build your resume, check your score, and boost your career with SkillFrame.
           </p>
+           <p className="text-center text-sm mt-6">
+              Don’t have an account?{" "}
+              <span
+                onClick={() => navigate("/signup")}
+                className="text-[#FFB347] cursor-pointer font-semibold hover:underline"
+              >
+                Sign up
+              </span>
+            </p>
         </div>
 
         {/* Right page (login form) */}
         <div className="w-1/2 flex justify-center items-center bg-[#1F5C72]/80">
           <form className="w-[80%] max-w-sm text-[#D9E0A4]">
-            <h2 className="text-3xl font-bold mb-8 text-center">Login</h2>
+            <h2 className="text-3xl font-bold mb-8 text-center">Login Page</h2>
 
             <div className="mb-6">
               <label className="block mb-2 text-sm font-semibold">Email</label>
@@ -54,17 +63,7 @@ export default function Login() {
               className="w-full bg-[#FFB347] text-[#19485F] font-bold py-3 rounded-full hover:bg-[#FFA533] transition-all duration-300"
             >
               Login
-            </button>
-
-            <p className="text-center text-sm mt-6">
-              Don’t have an account?{" "}
-              <span
-                onClick={() => navigate("/signup")}
-                className="text-[#FFB347] cursor-pointer font-semibold hover:underline"
-              >
-                Sign up
-              </span>
-            </p>
+            </button>          
           </form>
         </div>
 
