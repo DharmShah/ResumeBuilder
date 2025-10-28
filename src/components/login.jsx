@@ -1,85 +1,91 @@
 import React from "react";
-import logo from "../assets/robot.png"; // Import image
-import { useNavigate } from 'react-router-dom';
-
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   return (
-    <div className="flex mr-[10px] mt-[-20px] bg-gray-100 dark:bg-gray-900">
-      {/* Left Side - Logo Section */}
-      <div className="flex flex-col justify-center items-center w-1/2 bg-white">
-        <img src={logo} alt="Logo" height={550} />
-      </div>
+    <div className="relative flex justify-center items-center min-h-[calc(100vh-80px)] font-poppins bg-gradient-to-br from-[#19485F] via-[#1F5C72] to-[#FFB347] animate-[gradientShift_10s_ease_infinite] bg-[length:200%_200%] overflow-hidden">
+      
+      {/* Glowing circles */}
+      <div className="absolute top-[-120px] left-[-120px] w-[350px] h-[350px] bg-[#FFB347]/30 rounded-full blur-3xl animate-[pulseSlow_6s_ease_in_out_infinite]"></div>
+      <div className="absolute bottom-[-120px] right-[-120px] w-[350px] h-[350px] bg-[#D9E0A4]/20 rounded-full blur-3xl animate-[pulseSlow_6s_ease_in_out_infinite]"></div>
 
-      {/* Right Side - Login Form */}
-      <div className="flex justify-center items-center w-1/2">
-        <div className="w-[350px] p-8 space-y-8 bg-white rounded-2xl shadow-2xl dark:bg-gray-800">
-          <h1 className="text-3xl font-bold text-center text-gray-800 dark:text-gray-100">
-            Login
+      {/* Book-style container */}
+      <div className="relative flex w-[75%] max-w-6xl h-[70vh] rounded-[40px] shadow-2xl overflow-hidden border border-[#D9E0A4]/30 transform perspective-[1200px] bg-[#1F5C72]/90 backdrop-blur-sm">
+        
+        {/* Left page (text/graphic) */}
+        <div className="w-1/2 bg-gradient-to-br from-[#19485F]/90 to-[#1F5C72]/90 flex flex-col justify-center items-center text-[#D9E0A4] p-12 border-r border-[#D9E0A4]/30">
+          <h1 className="text-5xl font-bold mb-4 text-center">
+            Welcome Back to <span className="text-[#FFB347]">SkillFrame</span>
           </h1>
+          <p className="text-lg text-center leading-relaxed opacity-90 max-w-md">
+            Build your resume, check your score, and boost your career with SkillFrame.
+          </p>
+        </div>
 
-          <form noValidate className="space-y-6">
-            <div>
-              <label
-                htmlFor="email"
-                className="block mt-[10px] w-[150px] mr-[230px] text-sm font-semibold text-gray-600 dark:text-gray-300"
-              >
-                Email Address
-              </label>
+        {/* Right page (login form) */}
+        <div className="w-1/2 flex justify-center items-center bg-[#1F5C72]/80">
+          <form className="w-[80%] max-w-sm text-[#D9E0A4]">
+            <h2 className="text-3xl font-bold mb-8 text-center">Login</h2>
+
+            <div className="mb-6">
+              <label className="block mb-2 text-sm font-semibold">Email</label>
               <input
-                id="email"
                 type="email"
-                placeholder="you@example.com"
-                className="h-12 w-full p-[10px] pl-[25px] bg-gray-50 border border-gray-300 text-gray-900 rounded-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                placeholder="Enter your email"
+                required
+                className=" w-full p-[10px] rounded-full bg-[#19485F] border border-[#D9E0A4]/50 text-[#D9E0A4] placeholder-[#C5D2B3] focus:outline-none focus:ring-2 focus:ring-[#FFB347]"
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block mt-[10px] mr-[230px] text-sm font-semibold text-gray-600 dark:text-gray-300"
-              >
-                Password
-              </label>
+            <div className="mb-6">
+              <label className="block mb-2 text-sm font-semibold">Password</label>
               <input
-                id="password"
                 type="password"
                 placeholder="Enter your password"
-                className="h-12 w-full p-[10px] pl-[25px] bg-gray-50 border border-gray-300 text-gray-900 rounded-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+                className="w-full p-3 p-[10px] mb-[15px] rounded-full bg-[#19485F] border border-[#D9E0A4]/50 text-[#D9E0A4] placeholder-[#C5D2B3] focus:outline-none focus:ring-2 focus:ring-[#FFB347]"
               />
-            </div>
-
-            <div className="text-right mt-[15px]">
-              <a
-                href="/forgot-password"
-                className="text-[15px] font-semibold  text-blue-600 hover:underline dark:text-blue-400"
-              >
-                Forgot Password?
-              </a>
             </div>
 
             <button
-              type="submit"  onClick={() => navigate('/')}
-              className="w-[390px] h-12 text-lg font-semibold text-white bg-gray-800 rounded-full 
-             hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 transition-colors duration-300"
+              type="submit"
+              className="w-full bg-[#FFB347] text-[#19485F] font-bold py-3 rounded-full hover:bg-[#FFA533] transition-all duration-300"
             >
               Login
             </button>
 
-            <div className="text-sm text-center text-gray-600 dark:text-gray-400 mt-[15px]">
-              Don't have an account?{" "}
-              <a
-                href="/signup"
-                className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+            <p className="text-center text-sm mt-6">
+              Don’t have an account?{" "}
+              <span
+                onClick={() => navigate("/signup")}
+                className="text-[#FFB347] cursor-pointer font-semibold hover:underline"
               >
-                Sign Up
-              </a>
-            </div>
+                Sign up
+              </span>
+            </p>
           </form>
         </div>
+
+        {/* Center fold (book spine) */}
+        <div className="absolute left-1/2 top-0 h-full w-[3px] bg-gradient-to-b from-[#D9E0A4]/10 via-[#D9E0A4]/40 to-[#D9E0A4]/10"></div>
       </div>
+
+      {/* Tailwind keyframes */}
+      <style>
+        {`
+          @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+          @keyframes pulseSlow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+          }
+        `}
+      </style>
     </div>
   );
 }

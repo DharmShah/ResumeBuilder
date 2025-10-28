@@ -7,7 +7,7 @@ export default function ResumeCheck() {
   const [resumeText, setResumeText] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [isConverting, setIsConverting] = useState(false); // 🆕 while converting speech
+  const [isConverting, setIsConverting] = useState(false);
   const chatEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -16,12 +16,11 @@ export default function ResumeCheck() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const addMessage = (message) => setMessages((prev) => [...prev, message]);
+  const addMessage = (msg) => setMessages((p) => [...p, msg]);
   const removeLastLoader = () =>
-    setMessages((prev) => prev.filter((msg) => msg.type !== "loader"));
+    setMessages((p) => p.filter((m) => m.type !== "loader"));
 
   const handleInputChange = (e) => setInputText(e.target.value);
-
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -29,24 +28,22 @@ export default function ResumeCheck() {
     }
   };
 
-  // 💬 Chat with Bot
   const handleSend = async () => {
-    const trimmedInput = inputText.trim();
-    if (!trimmedInput) return;
+    const trimmed = inputText.trim();
+    if (!trimmed) return;
 
-    addMessage({ type: "text", content: trimmedInput, sender: "user" });
+    addMessage({ type: "text", content: trimmed, sender: "user" });
     setInputText("");
     setLoading(true);
-    addMessage({ type: "loader", sender: "bot", content: "Bot is thinking..." });
+    addMessage({ type: "loader", sender: "bot", content: "Thinking..." });
 
     try {
-      const response = await fetch("http://localhost:5000/chat", {
+      const res = await fetch("http://localhost:5000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmedInput, resumeText }),
+        body: JSON.stringify({ message: trimmed, resumeText }),
       });
-
-      const data = await response.json();
+      const data = await res.json();
       removeLastLoader();
       addMessage({ type: "text", content: data.reply, sender: "bot" });
     } catch (err) {
@@ -61,7 +58,6 @@ export default function ResumeCheck() {
     }
   };
 
-  // 📁 Upload Resume
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -70,12 +66,11 @@ export default function ResumeCheck() {
     formData.append("resume", file);
 
     try {
-      const response = await fetch("http://localhost:5000/upload-resume", {
+      const res = await fetch("http://localhost:5000/upload-resume", {
         method: "POST",
         body: formData,
       });
-
-      const data = await response.json();
+      const data = await res.json();
       addMessage({
         type: "text",
         content: `Resume Score: ${data.score}/100`,
@@ -91,66 +86,56 @@ export default function ResumeCheck() {
     }
   };
 
-  // 🎙️ Start or stop recording audio
   const handleMicClick = async () => {
     if (isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       return;
     }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const rec = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
 
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        await sendAudioToWhisper(audioBlob);
+      rec.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        await sendAudioToWhisper(blob);
       };
 
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
+      mediaRecorderRef.current = rec;
+      rec.start();
       setIsRecording(true);
     } catch (err) {
-      alert("Microphone access denied or unavailable.");
-      console.error("Mic error:", err);
+      alert("Microphone access denied.");
     }
   };
 
-  // 🎯 Send audio blob → backend → Whisper → text
   const sendAudioToWhisper = async (audioBlob) => {
     const formData = new FormData();
     formData.append("audio", audioBlob);
 
     setIsConverting(true);
-    addMessage({
-      type: "loader",
-      sender: "bot",
-      content: "🎙️ Converting your speech...",
-    });
+    addMessage({ type: "loader", sender: "bot", content: "🎙️ Processing..." });
 
     try {
-      const response = await fetch("http://localhost:5000/speech-to-text", {
+      const res = await fetch("http://localhost:5000/speech-to-text", {
         method: "POST",
         body: formData,
       });
-
-      const data = await response.json();
+      const data = await res.json();
       removeLastLoader();
-      if (data.text) {
-        setInputText((prev) => (prev ? prev + " " + data.text : data.text));
-      } else {
+      if (data.text)
+        setInputText((p) => (p ? p + " " + data.text : data.text));
+      else
         addMessage({
           type: "text",
           content: "Speech recognition failed.",
           sender: "bot",
         });
-      }
     } catch (err) {
       removeLastLoader();
       addMessage({
@@ -158,21 +143,19 @@ export default function ResumeCheck() {
         content: "Error converting speech to text.",
         sender: "bot",
       });
-      console.error("Speech-to-text error:", err);
     } finally {
       setIsConverting(false);
       setIsRecording(false);
     }
   };
 
-  // 💬 Loader bubble
-  const LoaderBubble = ({ text = "Bot is thinking..." }) => (
+  const LoaderBubble = ({ text }) => (
     <div className="flex justify-start mb-3">
-      <div className="bg-gray-300 text-black px-4 py-2 rounded-lg flex items-center">
+      <div className="bg-[#1F5C72] text-[#FFD97A] px-3 py-1.5 rounded-lg flex items-center shadow-md text-sm animate-pulse">
         <svg
           aria-hidden="true"
           role="status"
-          className="inline w-4 h-4 mr-2 text-gray-600 animate-spin"
+          className="inline w-3 h-3 mr-2 text-[#FFB347] animate-spin"
           viewBox="0 0 100 101"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -205,81 +188,113 @@ export default function ResumeCheck() {
   );
 
   return (
-    <div className="flex flex-col w-[750px] p-[15px] border max-w-lg mx-auto h-[500px] bg-gray-900 overflow-hidden mt-12 shadow-lg">
-      <div className="bg-blue-600 text-white px-5 py-4 font-bold text-lg">
-        Upload Resume to chat with Bot
-      </div>
+    <div className="relative flex justify-center items-center min-h-screen bg-gradient-to-br from-[#0F2027] via-[#203A43] to-[#2C5364] bg-[length:200%_200%] animate-[gradientShift_10s_ease_infinite] overflow-hidden">
+      {/* Soft Glow Bubbles */}
+      <div className="absolute top-[5%] left-[10%] w-[250px] h-[250px] bg-[#FFB347]/20 rounded-full blur-3xl animate-[floatGlow_8s_ease_in_out_infinite]"></div>
+      <div className="absolute bottom-[5%] right-[10%] w-[250px] h-[250px] bg-[#D9E0A4]/20 rounded-full blur-3xl animate-[floatGlowReverse_8s_ease_in_out_infinite]"></div>
 
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-100 mb-2">
-        {messages.map((msg, index) =>
-          msg.type === "loader" ? (
-            <LoaderBubble key={index} text={msg.content} />
-          ) : (
-            <div
-              key={index}
-              className={`flex mb-3 ${
-                msg.sender === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
+      {/* Chatbot Box */}
+      <div className="relative z-10 flex flex-col w-[750px] h-[540px] rounded-[35px] overflow-hidden shadow-[0_0_40px_rgba(255,179,71,0.3)] border border-[#FFB347]/40 backdrop-blur-md bg-[#102F3D]/90 transform transition-all duration-500">
+        {/* Header */}
+        <div className="bg-[#1F5C72]/90 text-[#FFE8A3] text-center py-3 font-semibold text-xl border-b border-[#FFD97A]/20 shadow-md tracking-wide">
+          Resume Analyzer <span className="text-[#FFB347]">ChatBot</span>
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 bg-[#133F52]/70 space-y-4">
+          {messages.map((msg, i) =>
+            msg.type === "loader" ? (
+              <LoaderBubble key={i} text={msg.content} />
+            ) : (
               <div
-                className={`max-w-[70%] px-4 py-2 rounded-lg break-words ${
-                  msg.sender === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-300 text-black"
+                key={i}
+                className={`flex ${
+                  msg.sender === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                {msg.content}
+                <div
+                  className={`max-w-[70%] px-3 py-2 rounded-2xl leading-relaxed shadow-md text-sm transition-all duration-300 ${
+                    msg.sender === "user"
+                      ? "bg-[#FFB347] text-[#1F3B4D]"
+                      : "bg-[#D9E0A4]/25 text-[#F5F5DC]"
+                  }`}
+                >
+                  {msg.content}
+                </div>
               </div>
-            </div>
-          )
-        )}
-        <div ref={chatEndRef} />
+            )
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <div className="flex items-center justify-between gap-3 p-4 bg-[#1F5C72]/85 border-t border-[#FFD97A]/30">
+          <input
+            type="text"
+            value={inputText}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyPress}
+            placeholder="Type your message..."
+            className="flex-1 p-3 px-5 rounded-full bg-[#19485F] text-[#FFE8A3] placeholder-[#C5D2B3] border border-[#FFD97A]/40 focus:ring-2 focus:ring-[#FFB347] outline-none"
+          />
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleMicClick}
+              disabled={isConverting}
+              className={`p-3 rounded-full shadow-md transition-all ${
+                isRecording
+                  ? "bg-red-600 animate-pulse scale-110"
+                  : "bg-[#FFB347] text-[#1F3B4D] hover:bg-[#FFA533]"
+              }`}
+            >
+              <FaMicrophone />
+            </button>
+
+            <label
+              htmlFor="file-upload"
+              className="bg-[#FFB347] text-[#1F3B4D] p-3 rounded-full cursor-pointer hover:bg-[#FFA533] transition shadow-md"
+            >
+              <FaFileUpload />
+            </label>
+            <input
+              id="file-upload"
+              type="file"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            <button
+              onClick={handleSend}
+              disabled={loading}
+              className={`p-3 rounded-full flex items-center justify-center shadow-md transition ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#FFB347] text-[#1F3B4D] hover:bg-[#FFA533]"
+              }`}
+            >
+              <FaPaperPlane />
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 p-3 mt-[15px] border-t bg-white">
-        <input
-          type="text"
-          value={inputText}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyPress}
-          placeholder="Type a message..."
-          className="flex-1 m-[15px] px-[15px] p-[10px] border rounded-full outline-none focus:ring-2 focus:ring-blue-400"
-        />
-
-        {/* 🎙️ Microphone Button */}
-        <button
-          onClick={handleMicClick}
-          disabled={isConverting}
-          className={`p-3 rounded-full text-white mr-[10px] transition-all ${
-            isRecording
-              ? "bg-red-600 animate-pulse shadow-lg scale-110"
-              : "bg-blue-600 hover:bg-blue-700"
-          } ${isConverting ? "opacity-60 cursor-not-allowed" : ""}`}
-          title={isRecording ? "Recording..." : "Start recording"}
-        >
-          <FaMicrophone />
-        </button>
-
-        {/* 📁 File Upload */}
-        <label
-          htmlFor="file-upload"
-          className="bg-blue-600 mr-[15px] ml-[5px] text-white p-3 rounded-full cursor-pointer flex items-center justify-center hover:bg-blue-700 transition"
-        >
-          <FaFileUpload />
-        </label>
-        <input id="file-upload" type="file" onChange={handleFileChange} className="hidden" />
-
-        {/* 🚀 Send Button */}
-        <button
-          onClick={handleSend}
-          disabled={loading}
-          className={`p-3 mr-[10px] rounded-full text-white flex items-center justify-center ${
-            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          <FaPaperPlane />
-        </button>
-      </div>
+      {/* Animations */}
+      <style>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes floatGlow {
+          0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+          50% { transform: translateY(-15px) scale(1.1); opacity: 0.8; }
+        }
+        @keyframes floatGlowReverse {
+          0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+          50% { transform: translateY(15px) scale(1.1); opacity: 0.8; }
+        }
+      `}</style>
     </div>
   );
 }
