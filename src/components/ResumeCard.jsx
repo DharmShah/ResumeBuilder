@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import custome from "../assets/customise.png";
+import custome from "../assets/custom.png";
 import resume1 from "../assets/resume1.png";
 import resume2 from "../assets/resume2.png";
 import resume3 from "../assets/resume3.png";
@@ -13,17 +13,18 @@ import resume8 from "../assets/resume8.png";
 export default function ResumeCard() {
   const navigate = useNavigate();
 
-  const resumes = [
-    { id: 1, name: "Template 1", img: resume1 },
-    { id: 2, name: "Template 2", img: resume2 },
-    { id: 3, name: "Template 3", img: resume3 },
-    { id: 4, name: "Template 4", img: resume4 },
-    { id: 5, name: "Template 5", img: resume5 },
-    { id: 6, name: "Template 6", img: resume6 },
-    { id: 7, name: "Template 7", img: resume7 },
-    { id: 8, name: "Template 8", img: resume8 },
-    { id: 9, name: "Custom Resume", img: custome },
-  ];
+const resumes = [
+  { id: 1, name: "Template 1", img: resume1, type: "Corporate" },
+  { id: 2, name: "Template 2", img: resume2, type: "Executive" },
+  { id: 3, name: "Template 3", img: resume3, type: "Cyan Grey" },
+  { id: 4, name: "Template 4", img: resume4, type: "Rosewood" },
+  { id: 5, name: "Template 5", img: resume5, type: "Hunter Green" },
+  { id: 6, name: "Template 6", img: resume6, type: "Elegant" },
+  { id: 7, name: "Template 7", img: resume7, type: "Classic" },
+  { id: 8, name: "Template 8", img: resume8, type: "Tech" },
+  { id: 9, name: "Custom Resume", img: custome, type: "Custom" },
+];
+
 
 const handleClick = (id) => {
   // Clear ALL saved resume data
@@ -138,7 +139,9 @@ const handleClick = (id) => {
 
               {/* Button + spacing */}
               <div className="flex flex-col items-center justify-center p-5 bg-transparent">
-                <h3 className="text-lg font-medium text-[#19485F] mb-4">{isCustom ? "Build a Custom Resume" : "Preview & Use"}</h3>
+<h3 className="text-lg font-medium text-[#19485F] mb-4">
+  {isCustom ? "Build a Custom Resume" : resume.type}
+</h3>
 
                 {/* Button: custom one stands out */}
                 {isCustom ? (

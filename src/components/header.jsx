@@ -5,7 +5,7 @@ export default function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="flex w-[1200px] mt-[-20px] items-center justify-between bg-[#19485F] px-[15px] py-[10px] shadow-md">
+    <header className="flex w-[1215px] mt-[-20px] items-center justify-between bg-[#19485F] px-[15px] py-[10px] shadow-md">
 
       {/* Left: Logo + Title */}
       <div

@@ -88,7 +88,7 @@ export default function Index() {
                        hover:scale-110 hover:shadow-[0_0_20px_rgba(255,179,71,0.4)] 
                        transition-all duration-500"
           >
-            Create My Resume Now
+            Create Resume with Ai
           </button>
         </div>
 
