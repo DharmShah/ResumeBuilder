@@ -150,7 +150,7 @@ const ResumeBot = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleNext()}
-              placeholder="Enter your response..."
+              placeholder="Enter your Good Name: "
               className="flex-1 p-2 text-black rounded-md"
             />
             <button
@@ -321,9 +321,7 @@ const ResumeBot = () => {
                 >
                   Languages
                 </h2>
-                <p style={{ fontSize: "13px" }}>
-                  {get("Languages you know?")}
-                </p>
+                <p style={{ fontSize: "13px" }}>{get("Languages you know?")}</p>
               </>
             )}
           </div>
