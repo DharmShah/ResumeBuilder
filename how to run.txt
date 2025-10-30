@@ -1,40 +1,44 @@
-for python server
-# create virtual environment
+# How to run Python server
 
 0) cd my_flask_app
 
-1) python -m venv venv
+1) Create virtual environment
+   python -m venv venv
 
-2) venv\Scripts\activate
+2) Activate virtual environment
+   Windows: venv\Scripts\activate
+   macOS/Linux: source venv/bin/activate
 
-3) pip install flask
+3) Install all dependencies
+   pip install -r requirements.txt
 
-4) pip install python-dotenv requests flask flask-cors
+4) (Optional) If ffmpeg is missing:
+   Windows: choco install ffmpeg
+   macOS: brew install ffmpeg
+   Linux: sudo apt install ffmpeg
 
-4.5) pip install flask openai-whisper torch soundfile
-
-4.9) pip install flask flask-cors python-dotenv requests openai-whisper torch soundfile
-
-4.9.1) pip install ffmpeg-python ///////////////  choco install ffmpeg
-
-
-5) pip install -r requirements.txt
-
-6) python app.py
-
-
-
-# react
-1) npm install
-2) npm install -g vite
-3) npm install react-icons
-4) npm install lucide-react
-5) npm install tailwind-scrollbar
+5) Run the Flask app
+   python app.py
 
 
 
+# How to run React client
 
-#how to pull the repo 
+1) cd into the React project folder
 
-1) git pull or git pull origin main
+2) Install dependencies
+   npm install
 
+3) (Optional) Install extra packages if not in package.json
+   npm install react-icons lucide-react tailwind-scrollbar
+
+4) Run the React app
+   npm run dev
+
+
+
+# How to update project from git
+
+1) git pull
+   or
+   git pull origin main
