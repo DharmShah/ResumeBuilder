@@ -38,7 +38,7 @@ export default function ResumeCheck() {
     addMessage({ type: "loader", sender: "bot", content: "Thinking..." });
 
     try {
-      const res = await fetch("http://localhost:5000/chat", {
+      const res = await fetch("https://45r0mpcf-5000.inc1.devtunnels.ms/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed, resumeText }),
@@ -66,7 +66,7 @@ export default function ResumeCheck() {
     formData.append("resume", file);
 
     try {
-      const res = await fetch("http://localhost:5000/upload-resume", {
+      const res = await fetch("https://45r0mpcf-5000.inc1.devtunnels.ms/upload-resume", {
         method: "POST",
         body: formData,
       });
@@ -122,7 +122,7 @@ export default function ResumeCheck() {
     addMessage({ type: "loader", sender: "bot", content: "🎙️ Processing..." });
 
     try {
-      const res = await fetch("http://localhost:5000/speech-to-text", {
+      const res = await fetch("https://45r0mpcf-5000.inc1.devtunnels.ms/speech-to-text", {
         method: "POST",
         body: formData,
       });

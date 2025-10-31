@@ -71,7 +71,7 @@ const ResumeBot = () => {
     } else {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/generate-summary", {
+        const response = await fetch("https://45r0mpcf-5000.inc1.devtunnels.ms/generate-summary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newAnswers),
