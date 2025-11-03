@@ -42,7 +42,7 @@ export default function ResumeCheck() {
     addMessage({ type: "loader", sender: "bot", content: "Thinking..." });
 
     try {
-      const res = await fetch("https://45r0mpcf-5000.inc1.devtunnels.ms/chat", {
+      const res = await fetch("https://pt6hmfjr-5000.inc1.devtunnels.ms/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed, resumeText }),
@@ -153,15 +153,17 @@ export default function ResumeCheck() {
     addMessage({ type: "loader", sender: "bot", content: "🎙️ Processing..." });
 
     try {
-      const res = await fetch("https://45r0mpcf-5000.inc1.devtunnels.ms/speech-to-text", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "https://pt6hmfjr-5000.inc1.devtunnels.ms/speech-to-text",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
       const data = await res.json();
       removeLastLoader();
 
-      if (data.text)
-        setInputText((p) => (p ? p + " " + data.text : data.text));
+      if (data.text) setInputText((p) => (p ? p + " " + data.text : data.text));
       else
         addMessage({
           type: "text",

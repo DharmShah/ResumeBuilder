@@ -7,57 +7,51 @@ import whisper
 import tempfile
 import subprocess
 import traceback
+import logging
 
-# -------------------
-# Setup
-# -------------------
+# -------------------- Setup --------------------
 load_dotenv()
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# Logging setup
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 OCR_API_KEY = os.getenv("OCR_SPACE_API_KEY")
 
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# -------------------
-# Whisper model (lazy-loaded)
-# -------------------
-model = None  # don't load at startup
-
+# -------------------- Whisper Model --------------------
+model = None
 
 def get_whisper_model():
+    """Lazy load Whisper model."""
     global model
     if model is None:
         try:
-            print("🧠 Loading Whisper model (tiny.en)...")
+            logging.info("🧠 Loading Whisper model (tiny.en)...")
             model = whisper.load_model("tiny.en")
-            print("✅ Whisper model loaded successfully.")
+            logging.info("✅ Whisper model loaded successfully.")
         except Exception as e:
-            print("❌ Failed to load Whisper model:", e)
+            logging.error(f"❌ Failed to load Whisper model: {e}")
             model = None
     return model
 
-
-# -------------------
-# Chat endpoint
-# -------------------
+# -------------------- Chat Endpoint --------------------
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.get_json(silent=True) or {}
-    user_message = data.get("message", "")
+    user_message = data.get("message", "").strip()
     resume_text = data.get("resumeText", "")
 
     if not user_message:
         return jsonify({"error": "Message is required"}), 400
 
-    prompt = (
-        f"Resume:\n{resume_text}\n\nUser question: {user_message}"
-        if resume_text
-        else user_message
-    )
+    prompt = f"Resume:\n{resume_text}\n\nUser question: {user_message}" if resume_text else user_message
 
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -77,13 +71,10 @@ def chat():
         reply = result["choices"][0]["message"]["content"]
         return jsonify({"reply": reply})
     except Exception as e:
-        print("❌ Chat error:", e)
+        logging.error("❌ Chat error: %s", traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
-
-# -------------------
-# Resume upload + OCR
-# -------------------
+# -------------------- Resume Upload / OCR --------------------
 @app.route("/upload-resume", methods=["POST"])
 def upload_resume():
     if "resume" not in request.files:
@@ -109,22 +100,16 @@ def upload_resume():
         score = rate_resume(text)
         return jsonify({"score": score, "text_preview": text[:500]})
     except Exception as e:
-        print("❌ OCR error:", e)
+        logging.error("❌ OCR error: %s", traceback.format_exc())
         return jsonify({"error": f"OCR failed: {str(e)}"}), 500
 
-
-# -------------------
-# Resume scoring logic
-# -------------------
 def rate_resume(text: str) -> int:
+    """Quick resume quality rating."""
     keywords = ["education", "experience", "skills", "projects", "certifications"]
     score = sum(20 for k in keywords if k in text.lower())
     return min(score, 100)
 
-
-# -------------------
-# Speech-to-Text (Whisper)
-# -------------------
+# -------------------- Speech-to-Text --------------------
 @app.route("/speech-to-text", methods=["POST"])
 def speech_to_text():
     if "audio" not in request.files:
@@ -144,71 +129,72 @@ def speech_to_text():
 
     try:
         subprocess.run(
-            [
-                "ffmpeg",
-                "-i", temp_in_path,
-                "-ar", "16000",
-                "-ac", "1",
-                "-c:a", "pcm_s16le",
-                temp_out_path,
-            ],
+            ["ffmpeg", "-i", temp_in_path, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", temp_out_path],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=True,
         )
     except subprocess.CalledProcessError:
-        print("❌ FFmpeg conversion failed.")
+        logging.error("❌ FFmpeg conversion failed.")
         return jsonify({"error": "ffmpeg conversion failed"}), 500
 
     try:
         file_size = os.path.getsize(temp_out_path)
-        print(f"🎧 Converted audio size: {file_size} bytes")
-
         if file_size == 0:
             return jsonify({"error": "Audio conversion produced empty file"}), 500
 
-        print("🔊 Transcribing audio...")
+        logging.info(f"🎧 Converted audio size: {file_size} bytes")
         result = model.transcribe(temp_out_path)
         text = str(result.get("text", "")).strip()
-        print("✅ Transcription complete:", text)
+        logging.info(f"✅ Transcription complete: {text}")
         return jsonify({"text": text})
     except Exception:
-        print("❌ Whisper error:\n", traceback.format_exc())
+        logging.error("❌ Whisper error:\n%s", traceback.format_exc())
         return jsonify({"error": "Transcription failed"}), 500
     finally:
-        try:
-            os.remove(temp_in_path)
-            if os.path.exists(temp_out_path):
-                os.remove(temp_out_path)
-        except OSError:
-            pass
+        for path in [temp_in_path, temp_out_path]:
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except OSError:
+                pass
 
-
-# -------------------
-# Generate Resume Summary
-# -------------------
+# -------------------- Resume Summary Generation --------------------
 @app.route("/generate-summary", methods=["POST"])
 def generate_summary():
     data = request.get_json(silent=True) or {}
-
     user_details = "\n".join([f"{k}: {v}" for k, v in data.items()])
 
+    skills = data.get("List your skills (comma separated).", "")
+    projects = data.get("Tell me about your experience or projects.", "")
+    education = data.get("Tell me about your education background.", "")
+
     prompt = f"""
-You are a professional resume writer. Based on the user's responses, generate a polished, well-structured resume summary and full resume content in Markdown.
+You are an **expert resume writer and career branding specialist**.
+Your task is to take the user's partial or rough details and create a **complete, professional, and engaging resume** in **Markdown format**.
 
-Include:
-- Professional Summary
-- Education
-- Experience/Projects
-- Skills
-- Certifications
-- Languages
-- Contact Info
+Guidelines:
+- Make it sound confident and achievement-oriented.
+- If sections are missing, intelligently fill them in.
+- Expand short entries into professional, quantifiable bullet points.
+- Keep tone natural, concise, and professional.
+- Output must look like a polished resume ready for job applications.
 
-User details:
+Structure:
+**Professional Summary**
+**Education**
+**Experience / Projects**
+**Skills**
+**Certifications**
+**Languages**
+**Contact Info**
+
+---
+User Details:
 {user_details}
-
-Format clearly with **bold headings** and bullet points.
+Skills: {skills}
+Projects: {projects}
+Education: {education}
 """
 
     headers = {
@@ -219,32 +205,27 @@ Format clearly with **bold headings** and bullet points.
     payload = {
         "model": "gpt-4o-mini",
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.7,
+        "temperature": 0.85,
+        "max_tokens": 1200,
     }
 
     try:
-        response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=60)
+        response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=90)
         response.raise_for_status()
         result = response.json()
         summary = result["choices"][0]["message"]["content"]
         return jsonify({"summary": summary})
     except Exception as e:
-        print("❌ Summary generation error:", e)
+        logging.error("❌ Summary generation error: %s", traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
-
-# -------------------
-# Root health check
-# -------------------
+# -------------------- Health Check --------------------
 @app.route("/", methods=["GET"])
 def health_check():
     return jsonify({"status": "ok", "message": "Resume Builder Backend is live"}), 200
 
-
-# -------------------
-# Run server
-# -------------------
+# -------------------- Main --------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 Starting Flask server on port {port}")
+    logging.info(f"🚀 Starting Flask server on port {port}")
     app.run(host="0.0.0.0", port=port, debug=False)

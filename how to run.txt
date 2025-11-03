@@ -42,3 +42,7 @@
 1) git pull
    or
    git pull origin main
+
+
+
+forward the port and then change in airesume.jsx,resumeBot

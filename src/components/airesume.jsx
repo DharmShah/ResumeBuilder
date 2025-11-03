@@ -21,24 +21,9 @@ const ResumeBot = () => {
   const [current, setCurrent] = useState(0);
   const [input, setInput] = useState("");
   const [chat, setChat] = useState([]);
-  const [summary, setSummary] = useState("");
+  const [summary, setSummary] = useState(""); // AI summary
   const [loading, setLoading] = useState(false);
-  const [scale, setScale] = useState(1); // <-- for auto-scaling
-
   const resumeRef = useRef(null);
-
-  // Adjust scale if content exceeds one page
-  useEffect(() => {
-    if (!resumeRef.current) return;
-    const contentHeight = resumeRef.current.scrollHeight;
-    const maxHeight = 11.69 * 96; // A4 in px (~1122px @96dpi)
-    if (contentHeight > maxHeight) {
-      const newScale = Math.max(0.8, maxHeight / contentHeight);
-      setScale(newScale);
-    } else {
-      setScale(1);
-    }
-  }, [summary, answers]);
 
   const getInputType = () => {
     const q = questions[current].toLowerCase();
@@ -71,22 +56,24 @@ const ResumeBot = () => {
     } else {
       setLoading(true);
       try {
-        const response = await fetch("https://45r0mpcf-5000.inc1.devtunnels.ms/generate-summary", {
+        // ✅ Connect to your backend
+        const response = await fetch("http://127.0.0.1:5000/generate-summary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newAnswers),
         });
         const data = await response.json();
 
-        let clean = data.summary || "";
-        clean = clean
-          .replace(/[#_*`>-]/g, "")
+        // Clean up the summary text
+        let cleanSummary = data.summary || "";
+        cleanSummary = cleanSummary
+          .replace(/[#`>-]/g, "")
           .replace(/Professional Resume/gi, "")
-          .replace(/markdown/gi, "")
           .replace(/Feel free to modify.*/gi, "")
           .replace(/\n{3,}/g, "\n\n")
           .trim();
-        setSummary(clean);
+
+        setSummary(cleanSummary);
       } catch (err) {
         console.error("Error generating summary:", err);
         setSummary("⚠️ Error generating summary. Check backend logs.");
@@ -97,7 +84,7 @@ const ResumeBot = () => {
   };
 
   const handleDownload = () => {
-    const resumeElement = document.getElementById("printable-resume");
+    const element = document.getElementById("printable-resume");
     const opt = {
       margin: 0.4,
       filename: "Professional_Resume.pdf",
@@ -105,10 +92,18 @@ const ResumeBot = () => {
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
     };
-    html2pdf().set(opt).from(resumeElement).save();
+    html2pdf().set(opt).from(element).save();
   };
 
   const get = (q) => answers[q] || "";
+
+  const splitList = (text) =>
+    text
+      ? text
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-900 text-white rounded-2xl shadow-xl">
@@ -150,7 +145,7 @@ const ResumeBot = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleNext()}
-              placeholder="Enter your Good Name: "
+              placeholder="Enter your response..."
               className="flex-1 p-2 text-black rounded-md"
             />
             <button
@@ -170,125 +165,138 @@ const ResumeBot = () => {
       )}
 
       {summary && (
-        <div className="mt-8 bg-white text-black p-0 rounded-lg shadow-lg overflow-hidden">
+        <div className="mt-8 bg-white text-black rounded-lg shadow-lg overflow-hidden">
           <div
             id="printable-resume"
             ref={resumeRef}
             style={{
               fontFamily: "Arial, sans-serif",
-              padding: "0.8in",
+              padding: "0.9in",
               width: "8.27in",
-              height: "11.69in",
-              transform: `scale(${scale})`,
-              transformOrigin: "top center",
               color: "#000",
-              lineHeight: "1.4",
+              lineHeight: "1.5",
             }}
           >
-            <h1
-              style={{
-                fontSize: "26px",
-                textAlign: "center",
-                fontWeight: "bold",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
-                marginBottom: "6px",
-              }}
-            >
-              {get("What's your full name?")}
-            </h1>
-            <hr style={{ border: "1px solid #000", marginBottom: "10px" }} />
-            <p
-              style={{
-                textAlign: "center",
-                fontSize: "12px",
-                marginBottom: "18px",
-              }}
-            >
-              📧 {get("Your email address?")} | 📞 {get("Your phone number?")}
-              {get("GitHub profile link (optional)?") && (
-                <>
-                  {" | "}
-                  <a
-                    href={get("GitHub profile link (optional)?")}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    GitHub
-                  </a>
-                </>
-              )}
-              {get("LinkedIn profile link (optional)?") && (
-                <>
-                  {" | "}
-                  <a
-                    href={get("LinkedIn profile link (optional)?")}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    LinkedIn
-                  </a>
-                </>
-              )}
-              {get("Portfolio or other link (optional)?") && (
-                <>
-                  {" | "}
-                  <a
-                    href={get("Portfolio or other link (optional)?")}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Portfolio
-                  </a>
-                </>
-              )}
-            </p>
+            {/* Header */}
+            <div style={{ textAlign: "center", marginBottom: "10px" }}>
+              <h1
+                style={{
+                  fontSize: "26px",
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
+                }}
+              >
+                {get("What's your full name?")}
+              </h1>
+              <p style={{ fontSize: "13px", color: "#333" }}>
+                📧 {get("Your email address?")} | 📞 {get("Your phone number?")}
+                {get("LinkedIn profile link (optional)?") && (
+                  <>
+                    {" | "}
+                    <a
+                      href={get("LinkedIn profile link (optional)?")}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#0077b5" }}
+                    >
+                      LinkedIn
+                    </a>
+                  </>
+                )}
+                {get("GitHub profile link (optional)?") && (
+                  <>
+                    {" | "}
+                    <a
+                      href={get("GitHub profile link (optional)?")}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#24292e" }}
+                    >
+                      GitHub
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
 
+            <hr style={{ border: "1px solid #000", marginBottom: "15px" }} />
+
+            {/* ✅ Professional Summary */}
+            {summary && (
+              <>
+                <h2
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    borderBottom: "1px solid #000",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Professional Summary
+                </h2>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    marginBottom: "10px",
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {summary}
+                </p>
+              </>
+            )}
+
+            {/* Education */}
             <h2
               style={{
                 fontSize: "16px",
                 fontWeight: "bold",
                 borderBottom: "1px solid #000",
                 marginBottom: "6px",
-                marginTop: "12px",
               }}
             >
               Education
             </h2>
-            <p style={{ fontSize: "13px", marginBottom: "8px" }}>
+            <p style={{ fontSize: "13px", marginBottom: "10px" }}>
               {get("Tell me about your education background.")}
             </p>
 
+            {/* Experience */}
             <h2
               style={{
                 fontSize: "16px",
                 fontWeight: "bold",
                 borderBottom: "1px solid #000",
                 marginBottom: "6px",
-                marginTop: "12px",
               }}
             >
               Experience / Projects
             </h2>
-            <p style={{ fontSize: "13px", marginBottom: "8px" }}>
+            <p style={{ fontSize: "13px", marginBottom: "10px" }}>
               {get("Tell me about your experience or projects.")}
             </p>
 
+            {/* Skills */}
             <h2
               style={{
                 fontSize: "16px",
                 fontWeight: "bold",
                 borderBottom: "1px solid #000",
                 marginBottom: "6px",
-                marginTop: "12px",
               }}
             >
               Skills
             </h2>
-            <p style={{ fontSize: "13px" }}>
-              {get("List your skills (comma separated).")}
-            </p>
+            <ul style={{ fontSize: "13px", marginBottom: "10px" }}>
+              {splitList(get("List your skills (comma separated).")).map(
+                (skill, i) => (
+                  <li key={i}>• {skill}</li>
+                )
+              )}
+            </ul>
 
+            {/* Certifications */}
             {get("Any certifications you’ve earned?") && (
               <>
                 <h2
@@ -297,17 +305,21 @@ const ResumeBot = () => {
                     fontWeight: "bold",
                     borderBottom: "1px solid #000",
                     marginBottom: "6px",
-                    marginTop: "12px",
                   }}
                 >
                   Certifications
                 </h2>
-                <p style={{ fontSize: "13px" }}>
-                  {get("Any certifications you’ve earned?")}
-                </p>
+                <ul style={{ fontSize: "13px", marginBottom: "10px" }}>
+                  {splitList(get("Any certifications you’ve earned?")).map(
+                    (cert, i) => (
+                      <li key={i}>• {cert}</li>
+                    )
+                  )}
+                </ul>
               </>
             )}
 
+            {/* Languages */}
             {get("Languages you know?") && (
               <>
                 <h2
@@ -316,12 +328,15 @@ const ResumeBot = () => {
                     fontWeight: "bold",
                     borderBottom: "1px solid #000",
                     marginBottom: "6px",
-                    marginTop: "12px",
                   }}
                 >
                   Languages
                 </h2>
-                <p style={{ fontSize: "13px" }}>{get("Languages you know?")}</p>
+                <ul style={{ fontSize: "13px" }}>
+                  {splitList(get("Languages you know?")).map((lang, i) => (
+                    <li key={i}>• {lang}</li>
+                  ))}
+                </ul>
               </>
             )}
           </div>
