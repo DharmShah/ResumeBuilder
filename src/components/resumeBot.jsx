@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaPaperPlane, FaFileUpload, FaMicrophone } from "react-icons/fa";
 
 export default function ResumeCheck() {
+  // ✅ Change this to "http://localhost:5000" when testing locally
+  const API_BASE = "https://resumebuilderbackend-44hf.onrender.com";
+
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [resumeText, setResumeText] = useState("");
@@ -21,6 +24,7 @@ export default function ResumeCheck() {
     setMessages((p) => p.filter((m) => m.type !== "loader"));
 
   const handleInputChange = (e) => setInputText(e.target.value);
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -38,14 +42,23 @@ export default function ResumeCheck() {
     addMessage({ type: "loader", sender: "bot", content: "Thinking..." });
 
     try {
-      const res = await fetch("http://localhost:5000/chat", {
+      const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed, resumeText }),
       });
       const data = await res.json();
+
       removeLastLoader();
-      addMessage({ type: "text", content: data.reply, sender: "bot" });
+
+      if (data.reply)
+        addMessage({ type: "text", content: data.reply, sender: "bot" });
+      else
+        addMessage({
+          type: "text",
+          content: data.error || "No response from server.",
+          sender: "bot",
+        });
     } catch (err) {
       removeLastLoader();
       addMessage({
@@ -65,19 +78,36 @@ export default function ResumeCheck() {
     const formData = new FormData();
     formData.append("resume", file);
 
+    addMessage({
+      type: "loader",
+      sender: "bot",
+      content: "📄 Uploading and analyzing resume...",
+    });
+
     try {
-      const res = await fetch("http://localhost:5000/upload-resume", {
+      const res = await fetch(`${API_BASE}/upload-resume`, {
         method: "POST",
         body: formData,
       });
       const data = await res.json();
-      addMessage({
-        type: "text",
-        content: `Resume Score: ${data.score}/100`,
-        sender: "bot",
-      });
-      setResumeText(data.text_preview);
+      removeLastLoader();
+
+      if (data.score) {
+        addMessage({
+          type: "text",
+          content: `✅ Resume Score: ${data.score}/100`,
+          sender: "bot",
+        });
+        setResumeText(data.text_preview || "");
+      } else {
+        addMessage({
+          type: "text",
+          content: data.error || "Resume analysis failed.",
+          sender: "bot",
+        });
+      }
     } catch (err) {
+      removeLastLoader();
       addMessage({
         type: "text",
         content: `Network error: ${err.message}`,
@@ -92,6 +122,7 @@ export default function ResumeCheck() {
       setIsRecording(false);
       return;
     }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
@@ -122,18 +153,19 @@ export default function ResumeCheck() {
     addMessage({ type: "loader", sender: "bot", content: "🎙️ Processing..." });
 
     try {
-      const res = await fetch("http://localhost:5000/speech-to-text", {
+      const res = await fetch(`${API_BASE}/speech-to-text`, {
         method: "POST",
         body: formData,
       });
       const data = await res.json();
       removeLastLoader();
+
       if (data.text)
         setInputText((p) => (p ? p + " " + data.text : data.text));
       else
         addMessage({
           type: "text",
-          content: "Speech recognition failed.",
+          content: data.error || "Speech recognition failed.",
           sender: "bot",
         });
     } catch (err) {
@@ -189,11 +221,11 @@ export default function ResumeCheck() {
 
   return (
     <div className="relative flex justify-center items-center min-h-screen bg-gradient-to-br from-[#0F2027] via-[#203A43] to-[#2C5364] bg-[length:200%_200%] animate-[gradientShift_10s_ease_infinite] overflow-hidden">
-      {/* Soft Glow Bubbles */}
-      <div className="absolute top-[5%] left-[10%] w-[250px] h-[250px] bg-[#FFB347]/20 rounded-full blur-3xl animate-[floatGlow_8s_ease_in_out_infinite]"></div>
-      <div className="absolute bottom-[5%] right-[10%] w-[250px] h-[250px] bg-[#D9E0A4]/20 rounded-full blur-3xl animate-[floatGlowReverse_8s_ease_in_out_infinite]"></div>
+      {/* Soft Glow Effects */}
+      <div className="absolute top-[5%] left-[10%] w-[250px] h-[250px] bg-[#FFB347]/20 rounded-full blur-3xl animate-[floatGlow_8s_ease_in_out_infinite]" />
+      <div className="absolute bottom-[5%] right-[10%] w-[250px] h-[250px] bg-[#D9E0A4]/20 rounded-full blur-3xl animate-[floatGlowReverse_8s_ease_in_out_infinite]" />
 
-      {/* Chatbot Box */}
+      {/* Chat Box */}
       <div className="relative z-10 flex flex-col w-[750px] h-[540px] rounded-[35px] overflow-hidden shadow-[0_0_40px_rgba(255,179,71,0.3)] border border-[#FFB347]/40 backdrop-blur-md bg-[#102F3D]/90 transform transition-all duration-500">
         {/* Header */}
         <div className="bg-[#1F5C72]/90 text-[#FFE8A3] text-center py-3 font-semibold text-xl border-b border-[#FFD97A]/20 shadow-md tracking-wide">
@@ -227,7 +259,7 @@ export default function ResumeCheck() {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Input Area */}
+        {/* Input Section */}
         <div className="flex items-center justify-between gap-3 p-4 bg-[#1F5C72]/85 border-t border-[#FFD97A]/30">
           <input
             type="text"
@@ -279,7 +311,7 @@ export default function ResumeCheck() {
         </div>
       </div>
 
-      {/* Animations */}
+      {/* Background Animations */}
       <style>{`
         @keyframes gradientShift {
           0% { background-position: 0% 50%; }

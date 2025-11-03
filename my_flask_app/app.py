@@ -19,19 +19,27 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 OCR_API_KEY = os.getenv("OCR_SPACE_API_KEY")
 
-# -------------------
-# Whisper model (optimized for CPU)
-# -------------------
-try:
-    print("🧠 Loading Whisper model (tiny.en)...")
-    model = whisper.load_model("tiny.en")  # smaller + faster + CPU friendly
-    print("✅ Whisper model loaded successfully.")
-except Exception as e:
-    print("❌ Failed to load Whisper model:", e)
-    model = None
-
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# -------------------
+# Whisper model (lazy-loaded)
+# -------------------
+model = None  # don't load at startup
+
+
+def get_whisper_model():
+    global model
+    if model is None:
+        try:
+            print("🧠 Loading Whisper model (tiny.en)...")
+            model = whisper.load_model("tiny.en")
+            print("✅ Whisper model loaded successfully.")
+        except Exception as e:
+            print("❌ Failed to load Whisper model:", e)
+            model = None
+    return model
+
 
 # -------------------
 # Chat endpoint
@@ -63,7 +71,7 @@ def chat():
     }
 
     try:
-        response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload)
+        response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=60)
         response.raise_for_status()
         result = response.json()
         reply = result["choices"][0]["message"]["content"]
@@ -88,6 +96,7 @@ def upload_resume():
             "https://api.ocr.space/parse/image",
             files={"file": (file.filename, file.stream, file.mimetype)},
             data={"apikey": OCR_API_KEY, "language": "eng"},
+            timeout=60,
         )
         ocr_response.raise_for_status()
         ocr_result = ocr_response.json()
@@ -121,18 +130,18 @@ def speech_to_text():
     if "audio" not in request.files:
         return jsonify({"error": "No audio file uploaded"}), 400
 
+    model = get_whisper_model()
     if model is None:
         return jsonify({"error": "Whisper model not loaded"}), 500
 
     audio_file = request.files["audio"]
 
-    # Save temporary webm file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_in:
         audio_file.save(temp_in.name)
         temp_in_path = temp_in.name
 
-    # Convert webm → wav (ffmpeg required)
     temp_out_path = temp_in_path.replace(".webm", ".wav")
+
     try:
         subprocess.run(
             [
@@ -163,9 +172,9 @@ def speech_to_text():
         text = str(result.get("text", "")).strip()
         print("✅ Transcription complete:", text)
         return jsonify({"text": text})
-    except Exception as e:
+    except Exception:
         print("❌ Whisper error:\n", traceback.format_exc())
-        return jsonify({"error": f"Transcription failed: {str(e)}"}), 500
+        return jsonify({"error": "Transcription failed"}), 500
     finally:
         try:
             os.remove(temp_in_path)
@@ -175,17 +184,19 @@ def speech_to_text():
             pass
 
 
-
+# -------------------
+# Generate Resume Summary
+# -------------------
 @app.route("/generate-summary", methods=["POST"])
 def generate_summary():
     data = request.get_json(silent=True) or {}
 
-    # Convert answers into a readable format for GPT
-    user_details = "\n".join([f"{k} {v}" for k, v in data.items()])
+    user_details = "\n".join([f"{k}: {v}" for k, v in data.items()])
 
     prompt = f"""
 You are a professional resume writer. Based on the user's responses, generate a polished, well-structured resume summary and full resume content in Markdown.
-Make sure to include the following sections if applicable:
+
+Include:
 - Professional Summary
 - Education
 - Experience/Projects
@@ -194,10 +205,10 @@ Make sure to include the following sections if applicable:
 - Languages
 - Contact Info
 
-Here are the user's details:
+User details:
 {user_details}
 
-Format the output clearly with **bold headings** and bullet points.
+Format clearly with **bold headings** and bullet points.
 """
 
     headers = {
@@ -212,7 +223,7 @@ Format the output clearly with **bold headings** and bullet points.
     }
 
     try:
-        response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload)
+        response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=60)
         response.raise_for_status()
         result = response.json()
         summary = result["choices"][0]["message"]["content"]
@@ -222,10 +233,18 @@ Format the output clearly with **bold headings** and bullet points.
         return jsonify({"error": str(e)}), 500
 
 
+# -------------------
+# Root health check
+# -------------------
+@app.route("/", methods=["GET"])
+def health_check():
+    return jsonify({"status": "ok", "message": "Resume Builder Backend is live"}), 200
+
 
 # -------------------
 # Run server
 # -------------------
 if __name__ == "__main__":
-    print("🚀 Starting Flask server on http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    print(f"🚀 Starting Flask server on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=False)
