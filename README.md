@@ -1,28 +1,48 @@
-# React + Vite
+# How to run Python server
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+0) cd my_flask_app
 
-Currently, two official plugins are available:
+1) Create virtual environment
+   python -m venv venv
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+2) Activate virtual environment
+   Windows: venv\Scripts\activate
+   macOS/Linux: source venv/bin/activate
 
-## React Compiler
+3) Install all dependencies
+   pip install -r requirements.txt
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+4) (Optional) If ffmpeg is missing:
+   Windows: choco install ffmpeg
+   macOS: brew install ffmpeg
+   Linux: sudo apt install ffmpeg
 
-## Expanding the ESLint configuration
+5) Run the Flask app
+   python app.py
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 
 
-want to run the application follow the steps :
+# How to run React client
 
-1) install node js
-   check by runnign the command you have or not - node -v
-                                                  npm -v
-                                                  npm i
-                                                  npm install fafileupload
-                                                  npm install -D tailwindcss postcss autoprefixer
-                                                   npx tailwindcss init -p
-2) npm run dev
+1) cd into the React project folder
+
+2) Install dependencies
+   npm install
+
+3) (Optional) Install extra packages if not in package.json
+   npm install react-icons lucide-react tailwind-scrollbar
+
+4) Run the React app
+   npm run dev
+
+
+
+# How to update project from git
+
+1) git pull
+   or
+   git pull origin main
+
+
+
+forward the port and then change in airesume.jsx,resumeBot
